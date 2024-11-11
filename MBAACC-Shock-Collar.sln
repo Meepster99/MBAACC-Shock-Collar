@@ -7,6 +7,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBAACC-Shock-Collar", "MBAA
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBAACC-Shock-Collar-DLL", "MBAACC-Shock-Collar-DLL\MBAACC-Shock-Collar-DLL.vcxproj", "{AEB7E4D3-1285-4375-94B0-070873C17DFD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BF74C54D-0FD3-4CC3-9A44-7661C92F95BB}"
+	ProjectSection(SolutionItems) = preProject
+		Shared\Shared.cpp = Shared\Shared.cpp
+		Shared\Shared.h = Shared\Shared.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
