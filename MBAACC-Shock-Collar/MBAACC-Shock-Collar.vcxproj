@@ -148,6 +148,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Shared\Shared.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MBAACC-Shock-Collar.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Release\MBAACC-Shock-Collar-DLL.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

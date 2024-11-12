@@ -41,7 +41,6 @@ jobs:
         prerelease: true
         fail_on_unmatched_files: true
         files: |
-          ./Release/MBAACC-Shock-Collar-DLL.dll
           ./Release/MBAACC-Shock-Collar.exe
         body: | 
           This is a bleeding edge release. There are bugs. The bugs will hurt and most likely be funny. 
