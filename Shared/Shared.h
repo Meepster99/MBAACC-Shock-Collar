@@ -15,6 +15,17 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define CLAMP(value, min_val, max_val) MAX(MIN((value), (max_val)), (min_val))
 
+#define RESET "\033[0m\033[97m" // an extra white is tacked on here just to make it the default color
+
+#define RED "\033[91m"
+#define GREEN "\033[92m"
+#define YELLOW "\033[93m"
+#define BLUE "\033[94m"
+#define MAGENTA "\033[95m"
+#define CYAN "\033[96m"
+#define WHITE "\033[97m"
+
+
 class KeyState {
 public:
 	
@@ -89,6 +100,18 @@ inline const char* getShockTypeName(ShockType t) {
 	return shockTypeNames[temp];
 }
 
+const char* const shockTypeVerbs[3] = { "Zapped", "Made a sound for", "Vibrated" };
+
+inline const char* getShockTypeVerb(ShockType t) {
+	int temp = static_cast<int>(t);
+
+	if (temp < 0 || temp > 2) {
+		return "???";
+	}
+
+	return shockTypeVerbs[temp];
+}
+
 class Collar {
 public:
 
@@ -96,12 +119,10 @@ public:
 	
 	void setID(const char* id_);
 
-	void sendShock(int shockValue);
-
 	void displayStatus();
 
 	char id[256] = { '\0' };
-	// shock values are 0-100 (i think)
+	
 	int minShock = 0;
 	int maxShock = 0;
 	ShockType shockType = ShockType::Shock;
@@ -114,6 +135,8 @@ public:
 	CollarManager() {}
 
 	void setToken(const char* token_);
+
+	bool sendShock(int player, int strength, int duration);
 
 	void displayStatus();
 	void readSettings(int depth = 0);
