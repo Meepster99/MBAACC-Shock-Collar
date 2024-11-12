@@ -37,8 +37,6 @@ std::string censorString(const std::string& s) {
 
 bool sendPostRequest(const std::string& headers, const std::string& body, bool quiet) {
 
-	return true;
-
 	const std::string url = "https://api.openshock.app/1/shockers/control";
 	const std::string baseurl = "api.openshock.app";
 	const std::string endpoint = "/1/shockers/control";
