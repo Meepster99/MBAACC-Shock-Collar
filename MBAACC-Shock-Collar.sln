@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBAACC-Shock-Collar", "MBAACC-Shock-Collar\MBAACC-Shock-Collar.vcxproj", "{E63A40FE-8C4A-49B6-B2E1-FEFC46A20CC8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AEB7E4D3-1285-4375-94B0-070873C17DFD} = {AEB7E4D3-1285-4375-94B0-070873C17DFD}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBAACC-Shock-Collar-DLL", "MBAACC-Shock-Collar-DLL\MBAACC-Shock-Collar-DLL.vcxproj", "{AEB7E4D3-1285-4375-94B0-070873C17DFD}"
 EndProject

@@ -35,7 +35,7 @@ std::string censorString(const std::string& s) {
 	return res;
 }
 
-bool sendPostRequest(const std::string& headers, const std::string& body) {
+bool sendPostRequest(const std::string& headers, const std::string& body, bool quiet) {
 
 	const std::string url = "https://api.openshock.app/1/shockers/control";
 	const std::string baseurl = "api.openshock.app";
@@ -48,21 +48,27 @@ bool sendPostRequest(const std::string& headers, const std::string& body) {
 	// Initialize WinINet
 	hInternet = InternetOpen(L"WinINet Example", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
 	if (hInternet == NULL) {
-		printf("InternetOpen Error: %d\n", GetLastError());
+		if (!quiet) {
+			printf("InternetOpen Error: %d\n", GetLastError());
+		}
 		return false;
 	}
 
 	// Connect to the server
 	hConnect = InternetConnect(hInternet, L"api.openshock.app", INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
 	if (hConnect == NULL) {
-		printf("InternetConnect Error: %d\n", GetLastError());
+		if (!quiet) {
+			printf("InternetConnect Error: %d\n", GetLastError());
+		}
 		InternetCloseHandle(hInternet);
 		return false;
 	}
 
 	hRequest = HttpOpenRequest(hConnect, L"POST", L"/1/shockers/control", NULL, NULL, NULL, INTERNET_FLAG_RELOAD | INTERNET_FLAG_SECURE, 0);
 	if (hRequest == NULL) {
-		printf("HttpOpenRequest Error: %d\n", GetLastError());
+		if (!quiet) {
+			printf("HttpOpenRequest Error: %d\n", GetLastError());
+		}
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
 		return false;
@@ -70,12 +76,13 @@ bool sendPostRequest(const std::string& headers, const std::string& body) {
 	
 	bool res = HttpSendRequestA(hRequest, headers.c_str(), headers.size(), (LPVOID)body.c_str(), body.size());
 	if (!res) {
-		printf("HttpSendRequest Error: %d\n", GetLastError());
+		if (!quiet) {
+			printf("HttpSendRequest Error: %d\n", GetLastError());
+		}
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
 		return false;
 	}
-
 	
 	char buffer[4096];
 	std::string responseData = "";
@@ -84,14 +91,14 @@ bool sendPostRequest(const std::string& headers, const std::string& body) {
 		responseData.append(buffer, bytesRead);
 	}
 
-	//std::cout << "Response Data: " << responseData << std::endl;
-	
 	DWORD dwStatusCode = 0;
 	DWORD dwSize = sizeof(dwStatusCode);
 	res = HttpQueryInfoA(hRequest, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &dwStatusCode, &dwSize, NULL);
 	if (!res || dwStatusCode != 200) {
-		std::cout << "Response Data: " << responseData << std::endl;
-		printf("res: %d http: %d\n", res, dwStatusCode);
+		if (!quiet) {
+			printf("Response Data: %s\n", responseData.c_str());
+			printf("res: %d http: %d\n", res, dwStatusCode);
+		}
 		InternetCloseHandle(hRequest);
 		InternetCloseHandle(hConnect);
 		InternetCloseHandle(hInternet);
@@ -112,9 +119,10 @@ void Collar::setID(const char* id_) {
 }
 
 void Collar::displayStatus() {
-	printf("\tID: %s\n", id[0] == '\0' ? "???" : censorString(id));
-	printf("\tmin shock: %3d\n", minShock);
-	printf("\tmax shock: %3d\n", maxShock);
+	printf("\tstatus: %s%s\n" RESET, online ? GREEN : RED, online ? "online" : "unknown");
+	printf("\tID: %s\n", id[0] == '\0' ? "???" : id);
+	printf("\tmin shock: %3d%s\n", minShock, minShock == 69 ? CYAN " :3" RESET : "");
+	printf("\tmax shock: %3d%s\n", maxShock, maxShock == 69 ? CYAN " :3" RESET : "");
 	printf("\tshock type: %s\n", getShockTypeName(shockType));
 }
 
@@ -128,7 +136,7 @@ void CollarManager::displayStatus() {
 
 	printf("CollarManager Status:\n");
 	
-	printf("Token: %s\n\n", token[0] == '\0' ? "???" : censorString(token));
+	printf("\tToken: %s\n\n", token[0] == '\0' ? "???" : censorString(token));
 
 	printf("Collar 1:\n");
 	collar1.displayStatus();
@@ -161,7 +169,7 @@ void CollarManager::readSettings(int depth) {
 			"\n"
 			"# P1 Shocker ID\n"
 			"p1ID : put it here please :)\n"
-			"p1MinShock : 10 # min shock\n"
+			"p1MinShock : 10 # min shock. shock values are 0-100\n"
 			"p1MaxShock : 20 # max shock\n"
 			"p1Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
@@ -243,17 +251,32 @@ void CollarManager::readSettings(int depth) {
 				}
 
 			}
-
-
-
 		}
 	}
 
 	inFile.close();
 
+	for (int i = 0; i < 2; i++) {
+
+		int min = collars[i].minShock;
+		int max = collars[i].maxShock;
+
+		collars[i].minShock = MIN(min, max);
+		collars[i].maxShock = MAX(min, max);
+
+		ShockType backup = collars[i].shockType;
+		collars[i].shockType = ShockType::Stop;
+
+		collars[i].online = sendShock(i, 0, 0, true);
+
+		collars[i].shockType = backup;
+	}
+
+	
+
 }
 
-bool CollarManager::sendShock(int player, int strength, int duration) {
+bool CollarManager::sendShock(int player, int strength, int duration, bool quiet) {
 	
 	// strength is a float from 0-1 which will be converted into the range of minstrength - maxstrength
 	// ill do that in melty, or somewhere else
@@ -275,20 +298,132 @@ bool CollarManager::sendShock(int player, int strength, int duration) {
 
 	std::string headers = "accept: application/json\r\nOpenShockToken: " + std::string(token) + "\r\nContent-Type: application/json\r\n";
 
-	bool res = sendPostRequest(headers, body);
-
+	bool res = sendPostRequest(headers, body, quiet);
 
 	if (!res) {
 
-		printf("\n\n" RED);
+		if (!quiet) {
+			printf("\n\n" RED);
 
-		printf("body: %s\n\n", body.c_str());
+			printf("body: %s\n\n", body.c_str());
 
-		printf("headers: %s\n\n", headers.c_str());
+			printf("headers: %s\n\n", headers.c_str());
 
-		printf(RESET);
+			printf(RESET);
+		}
 
 	}
 
 	return res;
 }
+
+void CollarManager::sendShock(PipePacket packet) {
+
+	int player = packet.player;
+	int duration = packet.getLength();
+	int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
+	strength = CLAMP(strength, 0, 100);
+
+	packet.print();
+
+	sendShock(player, strength, duration, true);
+}
+
+// -----
+
+Pipe::~Pipe() {
+	if (serverHandle != NULL) {
+		CloseHandle(serverHandle);
+	}
+
+	if (clientHandle != NULL) {
+		CloseHandle(clientHandle);
+	}
+
+}
+
+void Pipe::initServer() {
+	
+	serverHandle = CreateNamedPipeA(
+		Pipe::pipeName,
+		PIPE_ACCESS_INBOUND,
+		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+		1, // one max client
+		0, // out buffer size. i dont have an out buffer, so,, 0?
+		sizeof(PipePacket) * 1024, // rn im saying my messages are 4 bytes each. i havent actually decided on the message format. could probs do one byte. if this fills up, melty will probs block, which is super bad
+		0,
+		NULL
+	);
+
+	if (serverHandle == INVALID_HANDLE_VALUE) {
+		printf(RED "failed to create server pipe" RESET);
+		serverHandle = NULL;
+		return;
+	}
+}
+
+void Pipe::initClient() {
+
+	clientHandle = CreateFileA(
+		Pipe::pipeName,
+		GENERIC_WRITE,           
+		0,                       
+		NULL,                    
+		OPEN_EXISTING,           
+		0,                       
+		NULL                     
+	);
+
+	if (clientHandle == INVALID_HANDLE_VALUE) {
+		printf(RED "failed to create client pipe" RESET);
+		clientHandle = NULL;
+	}
+
+}
+
+bool Pipe::peek() {
+	DWORD bytesAvailable = 0;
+	bool res;
+	
+	res = PeekNamedPipe(serverHandle, NULL, 0, NULL, &bytesAvailable, NULL);
+	if (!res) {
+		//printf(RED "failed to peek pipe err: %d\n" RESET, GetLastError());
+		return false;
+	}
+
+	return bytesAvailable != 0;
+}
+
+std::optional<PipePacket> Pipe::pop() {
+
+	if (!peek()) {
+		return std::optional<PipePacket>();
+	}
+
+	PipePacket res;
+	
+	DWORD bytesRead;
+	if (!ReadFile(serverHandle, &res, sizeof(PipePacket), &bytesRead, NULL)) {
+		return std::optional<PipePacket>();
+	}
+
+	return res;
+}
+
+void Pipe::push(PipePacket data) {
+	
+	DWORD bytesWritten = 0;
+	
+	if (!WriteFile(clientHandle, &data, sizeof(PipePacket), &bytesWritten, NULL)) {
+		printf(RED "failed to write to pipe err: %d\n" RESET, GetLastError());
+	}
+
+}
+
+void Pipe::send(int player, int strength, int length) {
+	player = CLAMP(player, 0, 1);
+	strength = CLAMP(strength, 0, 100);
+	PipePacket sendData(player, strength, length);
+	push(sendData);
+}
+
