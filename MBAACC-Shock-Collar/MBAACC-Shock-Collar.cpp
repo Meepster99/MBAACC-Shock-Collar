@@ -7,6 +7,8 @@
 #include <fstream>
 #include <tlhelp32.h>
 #include <wininet.h>
+#include <cstdlib>
+#include <csignal>
 #pragma comment(lib, "wininet.lib")
 #include "../Shared/Shared.h"
 
@@ -107,7 +109,6 @@ bool inject() {
 	return true;
 }
 
-
 void clearConsole() {
 	COORD coord = { 0, 0 };
 	DWORD dwWritten;
@@ -136,7 +137,49 @@ void renderConsole() {
 
 }
 
+HANDLE exitEvent = NULL;
+
+void onExit() {
+	// uninject the dll, hopefully, to make my compilation easier
+	SetEvent(exitEvent);
+
+	//Sleep(1000);
+
+	CloseHandle(exitEvent);
+}
+
+void sigtermHandle(int sig) {
+	onExit();
+	std::exit(sig);
+}
+
+BOOL WINAPI ConsoleHandler(DWORD signal) {
+	if (signal == CTRL_CLOSE_EVENT) {
+		onExit();
+	}
+	return TRUE;
+}
+
 int main() {
+	
+	std::atexit(onExit);
+	std::signal(SIGTERM, sigtermHandle); 
+	SetConsoleCtrlHandler(ConsoleHandler, TRUE);
+
+	// event needs to be created here so that its actually blockable.
+	exitEvent = CreateEvent(
+		NULL,
+		FALSE,
+		FALSE,
+		L"MBAACCSHOCKCOLLAREXIT"
+	);
+
+	if (exitEvent == NULL) {
+		printf(RED "failed to create exit event\n" RESET);
+		Sleep(1000);
+		return 0;
+	}
+
 	
 	timeBeginPeriod(1);
 
@@ -233,9 +276,8 @@ int main() {
 				continue;
 			}
 			
-			playerPackets[temp.player].value().strength = MAX(playerPackets[temp.player].value().strength, temp.strength);
-			playerPackets[temp.player].value().length = MAX(playerPackets[temp.player].value().length, temp.length);
-
+			//playerPackets[temp.player].value().strength = MAX(playerPackets[temp.player].value().strength, temp.strength);
+			
 			recvData = pipe.pop();
 		}
 

@@ -17,32 +17,6 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define CLAMP(value, min_val, max_val) MAX(MIN((value), (max_val)), (min_val))
 
-
-#define PUSH_CALLEE __asm \
-{                         \
-   __asm push ebx   \
-   __asm push esi   \
-   __asm push edi   \
-}
-
-#define POP_CALLEE __asm \
-{                        \
-   __asm pop edi   \
-   __asm pop esi   \
-   __asm pop ebx   \
-}
-
-#define PUSH_FRAME __asm \
-{                        \
-   __asm push ebp        \
-   __asm mov ebp, esp    \
-}
-
-#define POP_FRAME __asm \
-{                       \
-   __asm pop ebp        \
-}
-
 #define PUSH_ALL __asm  \
 {                       \
 	__asm push esp		\
@@ -196,29 +170,41 @@ inline const char* getShockTypeVerb(ShockType t) {
 
 typedef struct PipePacket {
 	PipePacket() {}
-	PipePacket(int p, int s, int l) {
-		player = p;
-		strength = s;
-		// length in ms/10. as in 100 here is 100*10 ms actually, also, the value is sub 300. so, a 100 would follow 300 + (100 * 10) = 
-		// ended up changing the above to *10 for a max length of ~ 1s
-		length = (l - 300) / 3;
-		length = CLAMP(length, 0, 255);
+
+	inline void setStrength(int s) {
+		strength = round(((float)s) / 100.0f);
+		strength = CLAMP(strength, 0, 63);
 	}
-	uint8_t player : 1;
-	uint8_t strength : 7; // 0-100, we only need 7 bits
-	uint8_t length; 
-	inline int getLength() {
-		return 300 + (length * 3);
+	inline int getStrength() {
+		return strength * 100;
 	}
-	inline void print() {
-		printf("P%d S:%3d L:%4d\n", player, strength, getLength());
-	}
-	inline void printCR() {
-		printf("Player %d Strength:%3d Length:%4d             \r", player + 1, strength, getLength());
-	}
+
+	union {
+
+		struct { 
+
+			uint8_t player : 1;
+			uint8_t counterhit : 1;
+			uint8_t screenshake : 1;
+			uint8_t bounce : 1;
+			uint8_t crit : 1; 
+			uint8_t reduce : 1;
+			uint8_t _unused3 : 1;
+			uint8_t _unused4 : 1;
+
+			uint8_t strength : 6; // move damage. a move which does 3000 will be encoded as 30.
+			uint8_t _unused5 : 1;
+			uint8_t _unused6 : 1;
+
+		};
+
+		uint16_t __unused;
+	};
+	
+
 } PipePacket;
 
-static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size");
+static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
 
 class Pipe {
 public:
@@ -232,7 +218,6 @@ public:
 	bool peek();
 	std::optional<PipePacket> pop();
 	void push(PipePacket data);
-	void send(int player, int strength, int length);
 
 
 	HANDLE serverHandle = NULL;

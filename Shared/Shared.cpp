@@ -320,14 +320,22 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 
 void CollarManager::sendShock(PipePacket packet) {
 
-	int player = packet.player;
-	int duration = packet.getLength();
-	int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
-	packet.strength = CLAMP(strength, 0, 100);
+	//int player = packet.player;
+	//int duration = packet.getLength();
+	//int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
+	//packet.strength = CLAMP(strength, 0, 100);
 
 	//printf("%d\n", packet.strength);
 
-	packet.printCR();
+	//packet.printCR();
+
+	// we will calculate length here!
+
+	int player = 0;
+	int strength = 0;
+	int duration = 0;
+
+	printf("%d\r", packet.strength);
 
 	sendShock(player, strength, duration, true);
 }
@@ -445,12 +453,5 @@ void Pipe::push(PipePacket data) {
 		printf(RED "failed to write to pipe err: %d\n" RESET, GetLastError());
 	}
 
-}
-
-void Pipe::send(int player, int strength, int length) {
-	player = CLAMP(player, 0, 1);
-	strength = CLAMP(strength, 0, 100);
-	PipePacket sendData(player, strength, length);
-	push(sendData);
 }
 
