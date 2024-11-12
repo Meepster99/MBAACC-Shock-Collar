@@ -50,6 +50,12 @@ void __stdcall patchByte(auto addr, const BYTE byte) {
 
 void takeHitsHook() {
 
+	/*if (pipe.clientHandle == NULL) {
+		__asm {
+			int 3;
+		}
+	}*/
+
 	static int playerHealth[2] = { 11400, 11400 };
 
 	static int d = 0;
@@ -77,6 +83,8 @@ void takeHitsHook() {
 			}
 		}
 	}
+
+	// making length proportional to hitstop (or something?) might be a good idea
 
 }
 
@@ -123,7 +131,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			break;
 		case DLL_THREAD_ATTACH:
 		case DLL_THREAD_DETACH:
+			break;
 		case DLL_PROCESS_DETACH:
+			if (pipe.clientHandle) {
+				CloseHandle(pipe.clientHandle);
+				pipe.clientHandle = NULL;
+			}
 			break;
 	}
 	return TRUE;

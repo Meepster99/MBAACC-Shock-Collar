@@ -37,6 +37,8 @@ std::string censorString(const std::string& s) {
 
 bool sendPostRequest(const std::string& headers, const std::string& body, bool quiet) {
 
+	return true;
+
 	const std::string url = "https://api.openshock.app/1/shockers/control";
 	const std::string baseurl = "api.openshock.app";
 	const std::string endpoint = "/1/shockers/control";
@@ -350,7 +352,7 @@ void Pipe::initServer() {
 	serverHandle = CreateNamedPipeA(
 		Pipe::pipeName,
 		PIPE_ACCESS_INBOUND,
-		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
 		1, // one max client
 		0, // out buffer size. i dont have an out buffer, so,, 0?
 		sizeof(PipePacket) * 1024, // rn im saying my messages are 4 bytes each. i havent actually decided on the message format. could probs do one byte. if this fills up, melty will probs block, which is super bad
@@ -390,7 +392,17 @@ bool Pipe::peek() {
 	
 	res = PeekNamedPipe(serverHandle, NULL, 0, NULL, &bytesAvailable, NULL);
 	if (!res) {
-		//printf(RED "failed to peek pipe err: %d\n" RESET, GetLastError());
+		DWORD err = GetLastError();
+
+		if (err == ERROR_BROKEN_PIPE) {
+			DisconnectNamedPipe(serverHandle);
+			ConnectNamedPipe(serverHandle, NULL);
+		} else if (err == ERROR_BAD_PIPE) {
+
+		} else {
+			printf(RED "unknown err %d\n" RESET, err);
+		}
+
 		return false;
 	}
 
@@ -405,8 +417,22 @@ std::optional<PipePacket> Pipe::pop() {
 
 	PipePacket res;
 	
-	DWORD bytesRead;
-	if (!ReadFile(serverHandle, &res, sizeof(PipePacket), &bytesRead, NULL)) {
+	DWORD bytesRead = 0;
+	bool status = ReadFile(serverHandle, &res, sizeof(PipePacket), &bytesRead, NULL);
+	if (!status || bytesRead == 0) {
+
+		DWORD err = GetLastError();
+
+		if (err == ERROR_BROKEN_PIPE) {
+			DisconnectNamedPipe(serverHandle);
+			ConnectNamedPipe(serverHandle, NULL);
+		} else if (err == ERROR_BAD_PIPE) {
+
+		} else {
+			printf(RED "unknown err %d\n" RESET, err);
+		}
+
+		
 		return std::optional<PipePacket>();
 	}
 
