@@ -69,7 +69,11 @@ void takeHitsHook() {
 			DWORD attackDataPointer = *(DWORD*)(0x00555130 + (player * 0xAFC) + 0x1FC);
 			if (attackDataPointer != 0) {
 				uint16_t damage = *(uint16_t*)(attackDataPointer + 0x44);
-				pipe.send(player, d, 300);
+				// what is the highest single hitting thing in the game? this needs to be converted to a 0-100 value
+
+				float damagePercent = MIN((float)(damage) / 3000.0f, 1.0f);
+
+				pipe.send(player, 100 * damagePercent, 300);
 			}
 		}
 	}

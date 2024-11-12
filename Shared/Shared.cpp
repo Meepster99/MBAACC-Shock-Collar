@@ -284,7 +284,8 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 	// duration is a min of 300
 	// i should look at xrds code
 
-	strength = CLAMP(strength, 0.0f, 1.0f);
+	strength = CLAMP(strength, collars[player].minShock, collars[player].maxShock);
+	duration = CLAMP(duration, 300, 1000);
 
 	std::string body = R"([
 	{
@@ -322,7 +323,9 @@ void CollarManager::sendShock(PipePacket packet) {
 	int player = packet.player;
 	int duration = packet.getLength();
 	int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
-	strength = CLAMP(strength, 0, 100);
+	packet.strength = CLAMP(strength, 0, 100);
+
+	printf("%d\n", packet.strength);
 
 	packet.print();
 
