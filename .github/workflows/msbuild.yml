@@ -1,0 +1,51 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+#todo, this could automatically release a tagged build as a release. have it do that
+
+name: MSBuild
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  SOLUTION_FILE_PATH: .
+  BUILD_CONFIGURATION: Release
+  BLEEDING: 1
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Platform="x86" /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload files
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: bleeding-edge
+        name: Bleeding Edge
+        prerelease: true
+        fail_on_unmatched_files: true
+        files: |
+          ./Release/MBAACC-Shock-Collar-DLL.dll
+          ./Release/MBAACC-Shock-Collar.exe
+        body: | 
+          This is a bleeding edge release. There are bugs. The bugs will hurt and most likely be funny. 
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        
