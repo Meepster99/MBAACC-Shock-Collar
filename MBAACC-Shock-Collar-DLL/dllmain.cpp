@@ -114,8 +114,11 @@ void updateBattleSceneCallback() {
 			// recreate local_150
 			DWORD local_150 = 0x00555134 + ((*(DWORD*)(local_154)) * 0xAFC);
 			unsigned correctionValue = *(DWORD*)(local_154 + 0x20);
+			if (correctionValue == 0) {
+				correctionValue = 100;
+			}
 
-			damage = ((float)damage) * ((float)correctionValue * 0.01f);
+			damage = round(((float)damage) * ((float)correctionValue * 0.01f));
 
 			packet.setStrength(damage);
 

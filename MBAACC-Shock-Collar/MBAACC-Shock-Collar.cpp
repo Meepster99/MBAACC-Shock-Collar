@@ -162,6 +162,9 @@ BOOL WINAPI ConsoleHandler(DWORD signal) {
 
 int main() {
 	
+	//printf("%d\n", sizeof(PipePacket));
+	//return 0;
+
 	std::atexit(onExit);
 	std::signal(SIGTERM, sigtermHandle); 
 	SetConsoleCtrlHandler(ConsoleHandler, TRUE);

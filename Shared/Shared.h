@@ -172,30 +172,33 @@ typedef struct PipePacket {
 	PipePacket() {}
 
 	inline void setStrength(int s) {
-		strength = round(((float)s) / 100.0f);
-		strength = CLAMP(strength, 0, 63);
+		strength = round(((float)s) / 28.0f);
+		strength = CLAMP(strength, 0, 255);
 	}
 	inline int getStrength() {
-		return strength * 100;
+		return strength * 28;
 	}
 
 	union {
 
-		struct { 
-
+		struct {
+			uint8_t __unusedErrorBit : 1;
 			uint8_t player : 1;
 			uint8_t counterhit : 1;
 			uint8_t screenshake : 1;
 			uint8_t bounce : 1;
 			uint8_t crit : 1; 
 			uint8_t reduce : 1;
-			uint8_t _unused3 : 1;
 			uint8_t _unused4 : 1;
+			
+			uint8_t strength : 8; // move damage. this can be reduced to 
 
-			uint8_t strength : 6; // move damage. a move which does 3000 will be encoded as 30.
-			uint8_t _unused5 : 1;
-			uint8_t _unused6 : 1;
+		};
 
+		struct {
+			uint16_t errorBit : 1;
+			uint16_t error : 15;
+			
 		};
 
 		uint16_t __unused;
@@ -240,8 +243,8 @@ public:
 
 	char id[256] = { '\0' };
 	
-	int minShock = 0;
-	int maxShock = 0;
+	float minShock = 0;
+	float maxShock = 0;
 	ShockType shockType = ShockType::Shock;
 	bool online = false;
 

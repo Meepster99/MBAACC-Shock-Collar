@@ -121,8 +121,8 @@ void Collar::setID(const char* id_) {
 void Collar::displayStatus() {
 	printf("\tstatus: %s%s\n" RESET, online ? GREEN : RED, online ? "online" : "unknown");
 	printf("\tID: %s\n", id[0] == '\0' ? "???" : id);
-	printf("\tmin shock: %3d%s\n", minShock, minShock == 69 ? CYAN " :3" RESET : "");
-	printf("\tmax shock: %3d%s\n", maxShock, maxShock == 69 ? CYAN " :3" RESET : "");
+	printf("\tmin shock: %3d%s\n", (int)minShock, (int)minShock == 69 ? CYAN " :3" RESET : "");
+	printf("\tmax shock: %3d%s\n", (int)maxShock, (int)maxShock == 69 ? CYAN " :3" RESET : "");
 	printf("\tshock type: %s\n", getShockTypeName(shockType));
 }
 
@@ -331,11 +331,14 @@ void CollarManager::sendShock(PipePacket packet) {
 
 	// we will calculate length here!
 
-	int player = 0;
-	int strength = 0;
-	int duration = 0;
+	int player = packet.player;
+	float strength = packet.getStrength();
+	float duration = 300;
 
-	printf("%d\r", packet.strength);
+
+	strength = (collars[player].maxShock - collars[player].minShock) * (CLAMP(strength / 3000.0f, 0.0f, 1.0f)) + collars[player].minShock;
+
+	printf("P%d S:%3d D:%3d\r", player + 1, (int)strength, (int)duration);
 
 	sendShock(player, strength, duration, true);
 }
