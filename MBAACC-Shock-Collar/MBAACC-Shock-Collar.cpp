@@ -119,7 +119,7 @@ bool inject() {
 		return false;
 	}
 
-	std::wstring dllPath = getDLLPath(); // std::wstring(buffer) + std::wstring(L"\\MBAACC-Shock-Collar-DLL.dll");
+	std::wstring dllPath = getDLLPath(); //	 std::wstring(buffer) + std::wstring(L"\\MBAACC-Shock-Collar-DLL.dll");
 
 	size_t dllPathSize = (dllPath.length() + 1) * sizeof(wchar_t);
 
