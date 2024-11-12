@@ -123,7 +123,7 @@ void renderConsole() {
 
 	clearConsole();
 
-	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file(shockSettings.txt).make sure to save.\n" RESET);
+	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file(shockSettings.txt). Make sure to save it.\n" RESET);
 
 	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse to either of them.\n");
 	printf("Hold " CYAN "shift" RESET " to send a max strength pulse instead\n");
@@ -212,9 +212,9 @@ int main() {
 			bool res = collarManager.sendShock(collarIndex, shockValue, 300);
 
 			if (res) {
-				printf(GREEN "%s collar %d with a strength of %d\n" RESET, getShockTypeVerb(shockType), collarIndex + 1, shockValue);
+				printf(GREEN "%s collar %d with a strength of %d\r" RESET, getShockTypeVerb(shockType), collarIndex + 1, shockValue);
 			} else {
-				printf(RED "failed to send instruction to collar %d\n" RESET, collarIndex + 1);
+				printf(RED "failed to send instruction to collar %d\r" RESET, collarIndex + 1);
 			}
 
 		}

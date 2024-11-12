@@ -325,9 +325,9 @@ void CollarManager::sendShock(PipePacket packet) {
 	int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
 	packet.strength = CLAMP(strength, 0, 100);
 
-	printf("%d\n", packet.strength);
+	//printf("%d\n", packet.strength);
 
-	packet.print();
+	packet.printCR();
 
 	sendShock(player, strength, duration, true);
 }

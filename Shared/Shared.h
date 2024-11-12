@@ -213,6 +213,9 @@ typedef struct PipePacket {
 	inline void print() {
 		printf("P%d S:%3d L:%4d\n", player, strength, getLength());
 	}
+	inline void printCR() {
+		printf("Player %d Strength:%3d Length:%4d             \r", player + 1, strength, getLength());
+	}
 } PipePacket;
 
 static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size");
