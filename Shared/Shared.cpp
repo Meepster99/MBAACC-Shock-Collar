@@ -331,6 +331,13 @@ void CollarManager::sendShock(PipePacket packet) {
 
 	// we will calculate length here!
 
+	if (packet.errorBit) {
+
+		printf("data: %08X %d                                       \n", packet.error, packet.error);
+
+		return;
+	}
+
 	int player = packet.player;
 	float strength = packet.getStrength();
 	float duration = 300;

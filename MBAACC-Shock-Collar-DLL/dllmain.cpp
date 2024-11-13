@@ -59,12 +59,32 @@ void updateBattleSceneCallback() {
 	// todo, chip damage shouldnt shock you!
 	// make shield shock opponent
 
+	DWORD playerAddr;
 	static int playerHealth[2] = { 11400, 11400 };
-	static byte bounceCounts[2] = { 0, 0 };
+	static BYTE bounceCounts[2] = { 0, 0 };
+	static unsigned prevCorrection[2] = { 100, 100 };
+	static bool prevNotInCombo[2] = {true, true};
 
 	for (int player = 0; player < 2; player++) {
 
-		DWORD playerAddr = 0x00555130 + (player * 0xAFC);
+		// check 004770f0 in ghidra for an explanation
+		playerAddr = 0x00555130 + ((player) * 0xAFC);
+
+		bool temp = *(bool*)(playerAddr + 0x64);
+
+		if(!prevNotInCombo[player] && temp) {
+			prevCorrection[0] = 100;
+			prevCorrection[1] = 100;
+		}
+
+		prevNotInCombo[player] = temp;
+	}
+	
+
+
+	for (int player = 0; player < 2; player++) {
+
+		playerAddr = 0x00555130 + (player * 0xAFC);
 
 		int tempPlayerHealth = *(int*)(playerAddr + 0xBC);
 		if (tempPlayerHealth != playerHealth[player]) {
@@ -103,30 +123,42 @@ void updateBattleSceneCallback() {
 
 
 
-			uint16_t damage = *(uint16_t*)(attackDataPointer + 0x44);		
+			uint16_t damage = *(uint16_t*)(attackDataPointer + 0x44);
 			
-			// todo, grab the proation and then multiply it by this value!
-			DWORD local_154 = 0;
-			local_154 = *(BYTE*)0x0055df0f; // 00478bda
-			local_154 *= 0x20C; // 00478be7
-			local_154 += 0x00557db8; // 00478bed
-
-			// recreate local_150
-			DWORD local_150 = 0x00555134 + ((*(DWORD*)(local_154)) * 0xAFC);
-			unsigned correctionValue = *(DWORD*)(local_154 + 0x20);
-			if (correctionValue == 0) {
-				correctionValue = 100;
-			}
-
-			damage = round(((float)damage) * ((float)correctionValue * 0.01f));
+			damage = round(((float)damage) * ((float)prevCorrection[player] * 0.01f));
 
 			packet.setStrength(damage);
-
+			
 			pipe.push(packet);
+
+			//packet.errorBit = 1;
+			//packet.error = prevCorrection[player];
+			//pipe.push(packet);
 		}
 	}
 
-	// making length proportional to hitstop (or something?) might be a good idea
+	for (int player = 0; player < 2; player++) {
+
+		if (prevNotInCombo[1-player]) {
+			continue;
+		}
+
+		// check 004770f0 in ghidra for an explanation
+		playerAddr = 0x00555130 + 4 + ((player) * 0xAFC);
+
+
+
+		int iVar4 = ((int)*(BYTE*)(playerAddr + 0x2F0)) * 0x20C;
+		unsigned temp1 = (0x00557dd8 + iVar4);
+
+		BYTE corVal = *(BYTE*)temp1;
+		if (corVal == 0) {
+			corVal = 100;
+		}
+		prevCorrection[1 - player] = corVal;
+		
+	}
+	
 
 }
 

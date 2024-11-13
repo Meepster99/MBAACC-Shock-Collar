@@ -197,7 +197,8 @@ typedef struct PipePacket {
 
 		struct {
 			uint16_t errorBit : 1;
-			uint16_t error : 15;
+			//uint16_t error : 15;
+			uint32_t error;
 			
 		};
 
@@ -207,7 +208,7 @@ typedef struct PipePacket {
 
 } PipePacket;
 
-static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
+//static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
 
 class Pipe {
 public:

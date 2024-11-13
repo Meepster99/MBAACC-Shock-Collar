@@ -174,7 +174,7 @@ void renderConsole() {
 	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file(shockSettings.txt). Make sure to save it.\n" RESET);
 
 	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse to either of them.\n");
-	printf("Hold " CYAN "shift" RESET " to send a max strength pulse instead\n");
+	printf("Hold " CYAN "shift" RESET " to send a max strength pulse instead.\n");
 
 	printf("\n");
 
