@@ -105,6 +105,9 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>cd /D "$(ProjectDir)/../Shared/" &amp;&amp; call "$(ProjectDir)/../Shared/genVersion.bat"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -144,6 +147,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Shared\Shared.cpp" />
+    <ClCompile Include="..\Shared\version.cpp" />
     <ClCompile Include="MBAACC-Shock-Collar.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -13,6 +13,8 @@
 #pragma comment(lib, "wininet.lib")
 #include "../Shared/Shared.h"
 
+#include "../Shared/version.h"
+
 static_assert(sizeof(void*) == 4, "program must be compiled in 32 bit mode");
 
 CollarManager collarManager;
@@ -171,6 +173,8 @@ void renderConsole() {
 
 	clearConsole();
 
+	printf("MBAACC Shock Collar Version: %s%s. " YELLOW "<3\n" RESET, GIT_VERSION, !BLEEDING ? " BLEEDING" : "");
+
 	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "here" RESET " to open it. Make sure to save!\n");
 	
 	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse. Hold " CYAN "Shift" RESET " for max strength.\n");
@@ -317,9 +321,9 @@ int main() {
 			} else {
 				printf(RED "failed to send instruction to collar %d\r" RESET, collarIndex + 1);
 			}
-
+			
 		}
-
+		
 		// long story short, sending more than one request a frame, caused,, issues to put it lightly 
 
 		std::optional<PipePacket> playerPackets[2] = { std::optional<PipePacket>(), std::optional<PipePacket>() };
@@ -355,7 +359,7 @@ int main() {
 		if (inputRecord.EventType == MOUSE_EVENT) {
 			MOUSE_EVENT_RECORD& mer = inputRecord.Event.MouseEvent;
 
-			if (mer.dwMousePosition.Y == 0 && (mer.dwMousePosition.X >= 42 && mer.dwMousePosition.X <= 47)) {
+			if (mer.dwMousePosition.Y == 1 && (mer.dwMousePosition.X >= 42 && mer.dwMousePosition.X <= 47)) {
 				if (lMouse.keyDown()) {
 					wchar_t filenameBuffer[1024];
 					GetCurrentDirectory(1024, filenameBuffer);
