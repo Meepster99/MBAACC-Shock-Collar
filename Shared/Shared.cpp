@@ -161,6 +161,7 @@ void CollarManager::displayStatus() {
 	printf("Counter Hit Modifier  : %4.2f\n", counterHitMod);
 	printf("Screen Shake Modifier : %4.2f\n", screenShakeMod);
 	printf("Bounce Modifier       : %4.2f\n", bounceMod);
+	printf("Reduce Fail Modifier  : %4.2f\n", reduceFailMod);
 
 	printf("\n");
 }
@@ -211,6 +212,7 @@ void CollarManager::readSettings(int depth) {
 			"counterHit : 0.1\n"
 			"screenShake : 0.1\n"
 			"bounce : 0.1\n"
+			"reduceFail : 0.1\n"
 			;
 
 		outFile << exampleFile;
@@ -263,8 +265,10 @@ void CollarManager::readSettings(int depth) {
 					screenShakeMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
 				} else if (key == "bounce") {
 					bounceMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
-				} else if (key == "maxDamageVal") {
-					maxDamageVal = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				} else if (key == "maxdamageval") {
+					maxDamageVal = MAX(safeStof(val.c_str()), 0.0f);
+				} else if (key == "reducefail") {
+					reduceFailMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
 				}
 
 				continue;
@@ -364,21 +368,8 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 
 void CollarManager::sendShock(PipePacket packet) {
 
-	//int player = packet.player;
-	//int duration = packet.getLength();
-	//int strength = ((float)(collars[player].maxShock - collars[player].minShock) * ((float)(packet.strength) * 0.01f)) + collars[player].minShock;
-	//packet.strength = CLAMP(strength, 0, 100);
-
-	//printf("%d\n", packet.strength);
-
-	//packet.printCR();
-
-	// we will calculate length here!
-
 	if (packet.errorBit) {
-
 		printf("data: %08X %d                                       \n", packet.error, packet.error);
-
 		return;
 	}
 
@@ -390,10 +381,10 @@ void CollarManager::sendShock(PipePacket packet) {
 
 	float modVal = 0.0f;
 	
-	
 	modVal = MAX(modVal, packet.counterhit  ? counterHitMod  : 0.0f);
 	modVal = MAX(modVal, packet.screenshake ? screenShakeMod : 0.0f);
 	modVal = MAX(modVal, packet.bounce      ? bounceMod      : 0.0f);
+	modVal = MAX(modVal, packet.reduceFail  ? reduceFailMod  : 0.0f);
 
 	modVal = CLAMP(modVal, 0.0f, 1.0f);
 

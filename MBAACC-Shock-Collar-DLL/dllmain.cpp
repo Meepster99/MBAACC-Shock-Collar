@@ -50,20 +50,26 @@ void __stdcall patchByte(auto addr, const BYTE byte) {
 
 void updateBattleSceneCallback() {
 
-	/*if (pipe.clientHandle == NULL) {
-		__asm {
-			int 3;
-		}
-	}*/
-
-	// todo, chip damage shouldnt shock you!
-	// make shield shock opponent
-
 	DWORD playerAddr;
 	static int playerHealth[2] = { 11400, 11400 };
 	static BYTE bounceCounts[2] = { 0, 0 };
 	static unsigned prevCorrection[2] = { 100, 100 };
 	static bool prevNotInCombo[2] = {true, true};
+
+	// you can reduce until one frame AFTER. that is why this exists. additionally, im only sending a max of one shock per frame, so a queue isnt needed
+	// i hope that the flag is set long enough though, i will need a queue if otherwise
+	static std::optional<PipePacket> packetQueue[2];
+
+	for (int player = 0; player < 2; player++) {
+		playerAddr = 0x00555130 + (player * 0xAFC);
+		BYTE reduceStatus = *(BYTE*)(playerAddr + 0x348);
+
+		if (reduceStatus != 2 && packetQueue[player].has_value()) {
+			pipe.push(packetQueue[player].value());
+		}
+
+		packetQueue[player].reset();
+	}
 
 	for (int player = 0; player < 2; player++) {
 
@@ -79,8 +85,6 @@ void updateBattleSceneCallback() {
 
 		prevNotInCombo[player] = temp;
 	}
-	
-
 
 	for (int player = 0; player < 2; player++) {
 
@@ -113,12 +117,18 @@ void updateBattleSceneCallback() {
 				continue;
 			}
 
+			BYTE reduceStatus = *(BYTE*)(playerAddr + 0x348);
+			if (reduceStatus == 2) { // successful reduce
+				continue;
+			}
+
 			uint32_t hitFlags = *(uint32_t*)(attackDataPointer + 0x3C);
 
 			packet.player = player;
 			packet.counterhit = (*(BYTE*)(playerAddr + 0x194)) == 0;
 			packet.screenshake = !!(hitFlags & 0b01000000);
 			packet.bounce = bounceDamage;
+			packet.reduceFail = reduceStatus == 1;
 		
 			// todo, need crit
 
@@ -128,7 +138,9 @@ void updateBattleSceneCallback() {
 
 			packet.setStrength(damage);
 			
-			pipe.push(packet);
+			//pipe.push(packet);
+
+			packetQueue[player] = packet;
 
 			//packet.errorBit = 1;
 			//packet.error = prevCorrection[player];
@@ -156,7 +168,6 @@ void updateBattleSceneCallback() {
 		
 	}
 	
-
 }
 
 // -----

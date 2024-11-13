@@ -171,10 +171,9 @@ void renderConsole() {
 
 	clearConsole();
 
-	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file(shockSettings.txt). Make sure to save it.\n" RESET);
-
-	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse to either of them.\n");
-	printf("Hold " CYAN "shift" RESET " to send a max strength pulse instead.\n");
+	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "here" RESET " to open it. Make sure to save!\n");
+	
+	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse. Hold " CYAN "Shift" RESET " for max strength.\n");
 
 	printf("\n");
 
@@ -242,7 +241,7 @@ int main() {
 	DWORD prev_mode;
 	hInput = GetStdHandle(STD_INPUT_HANDLE);
 	GetConsoleMode(hInput, &prev_mode);
-	SetConsoleMode(hInput, prev_mode & ENABLE_EXTENDED_FLAGS);
+	SetConsoleMode(hInput, (prev_mode & ENABLE_EXTENDED_FLAGS) | ENABLE_MOUSE_INPUT);
 
 	// why does altering the cursor info somehow enable colors.
 	HANDLE hConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -252,12 +251,16 @@ int main() {
 	SetConsoleCursorInfo(hConsoleHandle, &cursorInfo);
 	SetConsoleMode(hConsoleHandle, 7);
 
+	INPUT_RECORD inputRecord;
+	DWORD events;
+
 	printf(RESET);
 
 	KeyState rKey('R');
 	KeyState oneKey('1');
 	KeyState twoKey('2');
 	KeyState shiftKey(VK_SHIFT);
+	KeyState lMouse(VK_LBUTTON);
 
 	collarManager.readSettings();
 	renderConsole();
@@ -345,6 +348,21 @@ int main() {
 
 		if (tick - lastShockTick == 500) {
 			printf("                                       \r");
+		}
+
+		ReadConsoleInput(hInput, &inputRecord, 1, &events);
+
+		if (inputRecord.EventType == MOUSE_EVENT) {
+			MOUSE_EVENT_RECORD& mer = inputRecord.Event.MouseEvent;
+
+			if (mer.dwMousePosition.Y == 0 && (mer.dwMousePosition.X >= 42 && mer.dwMousePosition.X <= 47)) {
+				if (lMouse.keyDown()) {
+					wchar_t filenameBuffer[1024];
+					GetCurrentDirectory(1024, filenameBuffer);
+					std::wstring filePath = std::wstring(filenameBuffer) + L"\\shockSettings.txt";
+					ShellExecute(NULL, L"open", L"notepad.exe", filePath.c_str(), NULL, SW_SHOWNORMAL);
+				}
+			}
 		}
 
 		Sleep(1);
