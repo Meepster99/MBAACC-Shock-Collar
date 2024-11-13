@@ -86,8 +86,14 @@ void updateBattleSceneCallback() {
 
 		playerAddr = 0x00555130 + (player * 0xAFC);
 
+		BYTE tempBounce = *(BYTE*)(playerAddr + 0x17E);
+		bool bounceDamage = tempBounce > bounceCounts[player];
+		bounceCounts[player] = tempBounce;
+
+		PipePacket packet;
+
 		int tempPlayerHealth = *(int*)(playerAddr + 0xBC);
-		if (tempPlayerHealth != playerHealth[player]) {
+		if (tempPlayerHealth != playerHealth[player] || bounceDamage) {
 			
 			if (tempPlayerHealth > playerHealth[player]) {
 				playerHealth[player] = tempPlayerHealth;
@@ -107,21 +113,14 @@ void updateBattleSceneCallback() {
 				continue;
 			}
 
-			PipePacket packet;
-
 			uint32_t hitFlags = *(uint32_t*)(attackDataPointer + 0x3C);
 
 			packet.player = player;
 			packet.counterhit = (*(BYTE*)(playerAddr + 0x194)) == 0;
 			packet.screenshake = !!(hitFlags & 0b01000000);
-
-			BYTE tempBounce = *(BYTE*)(playerAddr + 0x17E);
-			packet.bounce = tempBounce > bounceCounts[player];
-			bounceCounts[player] = tempBounce;
-
+			packet.bounce = bounceDamage;
+		
 			// todo, need crit
-
-
 
 			uint16_t damage = *(uint16_t*)(attackDataPointer + 0x44);
 			
@@ -145,8 +144,6 @@ void updateBattleSceneCallback() {
 
 		// check 004770f0 in ghidra for an explanation
 		playerAddr = 0x00555130 + 4 + ((player) * 0xAFC);
-
-
 
 		int iVar4 = ((int)*(BYTE*)(playerAddr + 0x2F0)) * 0x20C;
 		unsigned temp1 = (0x00557dd8 + iVar4);

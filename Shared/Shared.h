@@ -197,18 +197,18 @@ typedef struct PipePacket {
 
 		struct {
 			uint16_t errorBit : 1;
-			//uint16_t error : 15;
-			uint32_t error;
+			uint16_t error : 15;
+			//uint32_t error;
 			
 		};
 
-		uint16_t __unused;
+		uint16_t __unused = 0;
 	};
 	
 
 } PipePacket;
 
-//static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
+static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
 
 class Pipe {
 public:
@@ -265,6 +265,12 @@ public:
 	void readSettings(int depth = 0);
 
 	char token[256] = { '\0' };
+
+	float maxDamageVal = 3000.0f;
+	
+	float counterHitMod = 0.0f;
+	float screenShakeMod = 0.0f;
+	float bounceMod = 0.0f;
 
 	union {
 		Collar collars[2];

@@ -265,6 +265,7 @@ int main() {
 	pipe.initServer();
 
 	unsigned tick = 0;
+	unsigned lastShockTick = 0;
 
 	while (true) {
 		tick++;
@@ -338,7 +339,12 @@ int main() {
 		for (int i = 0; i < 2; i++) {
 			if (playerPackets[i].has_value()) {
 				collarManager.sendShock(playerPackets[i].value());
+				lastShockTick = tick;
 			}
+		}
+
+		if (tick - lastShockTick == 500) {
+			printf("                                       \r");
 		}
 
 		Sleep(1);

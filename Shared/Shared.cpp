@@ -22,6 +22,17 @@ int safeStoi(const std::string& s) {
 	return res;
 }
 
+float safeStof(const std::string& s) {
+	float res = -1;
+	try {
+		res = std::stof(s);
+	} catch (...) {
+		return -1;
+	}
+	return res;
+}
+
+
 std::string censorString(const std::string& s) {
 	std::string res = s;
 
@@ -136,7 +147,7 @@ void CollarManager::displayStatus() {
 
 	printf("CollarManager Status:\n");
 	
-	printf("\tToken: %s\n\n", token[0] == '\0' ? "???" : censorString(token));
+	printf("\tToken: %s\n\n", token[0] == '\0' ? "???" : censorString(token).c_str());
 
 	printf("Collar 1:\n");
 	collar1.displayStatus();
@@ -144,6 +155,13 @@ void CollarManager::displayStatus() {
 	
 	printf("Collar 2:\n");
 	collar2.displayStatus();
+	printf("\n");
+
+	printf("Max Damage Value      : %d\n", (int)maxDamageVal);
+	printf("Counter Hit Modifier  : %4.2f\n", counterHitMod);
+	printf("Screen Shake Modifier : %4.2f\n", screenShakeMod);
+	printf("Bounce Modifier       : %4.2f\n", bounceMod);
+
 	printf("\n");
 }
 
@@ -178,6 +196,21 @@ void CollarManager::readSettings(int depth) {
 			"p2MinShock : 10 # min shock\n"
 			"p2MaxShock : 20 # max shock\n"
 			"p2Type: Shock # can be either Shock, Sound, or Vibrate\n"
+			"\n"
+			"# misc settings\n"
+			"maxDamageVal : 3000 # this damage value will give maxShock.\n"
+			"\n"
+			"# these values should be decimals in the range of[0.0, 0.5)\n"
+			"# they will increase the shock strength by moving the minShockValue up that amount.\n"
+			"# heres a formula for you, inputs range from damage = [0.0, maxDamageVal)\n"
+			"# output range is[0.0, 1.0)\n"
+			"\n"
+			"# Shock(damage) = (1 - val)(damage / maxDamageVal) + val\n"
+			"# where val is the MAX of any triggered values\n"
+			"\n"
+			"counterHit : 0.1\n"
+			"screenShake : 0.1\n"
+			"bounce : 0.1\n"
 			;
 
 		outFile << exampleFile;
@@ -223,6 +256,17 @@ void CollarManager::readSettings(int depth) {
 			} else if (key[1] == '2') {
 				playerIndex = 1;
 			} else {
+
+				if (key == "counterhit") {
+					counterHitMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				} else if (key == "screenshake") {
+					screenShakeMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				} else if (key == "bounce") {
+					bounceMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				} else if (key == "maxDamageVal") {
+					maxDamageVal = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				}
+
 				continue;
 			}
 
@@ -342,10 +386,22 @@ void CollarManager::sendShock(PipePacket packet) {
 	float strength = packet.getStrength();
 	float duration = 300;
 
+	strength = (CLAMP(strength / maxDamageVal, 0.0f, 1.0f));
 
-	strength = (collars[player].maxShock - collars[player].minShock) * (CLAMP(strength / 3000.0f, 0.0f, 1.0f)) + collars[player].minShock;
+	float modVal = 0.0f;
+	
+	
+	modVal = MAX(modVal, packet.counterhit  ? counterHitMod  : 0.0f);
+	modVal = MAX(modVal, packet.screenshake ? screenShakeMod : 0.0f);
+	modVal = MAX(modVal, packet.bounce      ? bounceMod      : 0.0f);
 
-	printf("P%d S:%3d D:%3d\r", player + 1, (int)strength, (int)duration);
+	modVal = CLAMP(modVal, 0.0f, 1.0f);
+
+	strength = (1.0f - modVal) * strength + modVal;
+
+	strength = (collars[player].maxShock - collars[player].minShock) * strength + collars[player].minShock;
+
+	printf("P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
 
 	sendShock(player, strength, duration, true);
 }
