@@ -58,6 +58,7 @@ void updateBattleSceneCallback() {
 
 	// you can reduce until one frame AFTER. that is why this exists. additionally, im only sending a max of one shock per frame, so a queue isnt needed
 	// i hope that the flag is set long enough though, i will need a queue if otherwise
+	// testing needs to be done on this.
 	static std::optional<PipePacket> packetQueue[2];
 
 	for (int player = 0; player < 2; player++) {
@@ -65,6 +66,7 @@ void updateBattleSceneCallback() {
 		BYTE reduceStatus = *(BYTE*)(playerAddr + 0x348);
 
 		if (reduceStatus != 2 && packetQueue[player].has_value()) {
+		//if(packetQueue[player].has_value()) {
 			pipe.push(packetQueue[player].value());
 		}
 
@@ -147,6 +149,11 @@ void updateBattleSceneCallback() {
 			//pipe.push(packet);
 		}
 	}
+	
+	//PipePacket tempPacket;
+	//tempPacket.errorBit = 1;
+	//tempPacket.error = 1234;
+	//pipe.push(tempPacket);
 
 	for (int player = 0; player < 2; player++) {
 

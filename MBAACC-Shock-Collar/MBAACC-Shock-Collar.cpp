@@ -158,6 +158,27 @@ bool inject() {
 	return true;
 }
 
+void SetConsoleSize(int width, int height) {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (hConsole == INVALID_HANDLE_VALUE) {
+		return;
+	}
+
+
+	SMALL_RECT rect;
+	rect.Left = 0;
+	rect.Top = 0;
+	rect.Right = width - 1;
+	rect.Bottom = height - 1;
+	SetConsoleWindowInfo(hConsole, TRUE, &rect);
+
+	COORD bufferSize;
+	bufferSize.X = width;
+	bufferSize.Y = height;
+	SetConsoleScreenBufferSize(hConsole, bufferSize);
+
+}
+
 void clearConsole() {
 	COORD coord = { 0, 0 };
 	DWORD dwWritten;
@@ -173,17 +194,17 @@ void renderConsole() {
 
 	clearConsole();
 
-	printf("MBAACC Shock Collar Version: %s%s. " YELLOW "<3\n" RESET, GIT_VERSION, !BLEEDING ? " BLEEDING" : "");
+	printf("MBAACC Shock Collar Version: %s%s" RESET ". " YELLOW "<3\n" RESET, !BLEEDING ? RED : "", GIT_VERSION);
 
-	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "here" RESET " to open it. Make sure to save!\n");
+	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "<here>" RESET " to open it. Make sure to save!\n");
 	
 	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse. Hold " CYAN "Shift" RESET " for max strength.\n");
 
 	printf("\n");
 
-	collarManager.displayStatus();
-
 	printf("Melty Status: %s%s\n\n" RESET, meltyInjected ? CYAN : RED, meltyInjected ? "Injected" : "Not Found");
+
+	collarManager.displayStatus();
 
 }
 
@@ -214,6 +235,10 @@ int main() {
 	
 	//printf("%d\n", sizeof(PipePacket));
 	//return 0;
+
+	SetConsoleTitle(L"MBAACC-Shock-Collar");
+
+	SetConsoleSize(85, 30);
 
 	std::atexit(onExit);
 	std::signal(SIGTERM, sigtermHandle); 
@@ -292,9 +317,9 @@ int main() {
 		}
 
 		if (rKey.keyDown()) {
-			printf(CYAN "reloading config\n" RESET);
+			printf(CLEARHORIZONTAL CYAN "reloading config\r" RESET);
 			collarManager.readSettings();
-			renderConsole();
+			renderConsole(); 
 			continue;
 		}
 
@@ -345,30 +370,36 @@ int main() {
 
 		for (int i = 0; i < 2; i++) {
 			if (playerPackets[i].has_value()) {
+				
 				collarManager.sendShock(playerPackets[i].value());
+				
 				lastShockTick = tick;
 			}
 		}
 
 		if (tick - lastShockTick == 500) {
-			printf("                                       \r");
+			printf("\x1b[6A");
+			collarManager.displayModifiers();
 		}
 
-		ReadConsoleInput(hInput, &inputRecord, 1, &events);
+		// readconsoleinput wasnt blocking while i was plugged in, but was on battery?
+		if (PeekConsoleInput(hInput, &inputRecord, 1, &events) && events > 0) {
+			ReadConsoleInput(hInput, &inputRecord, 1, &events);
 
-		if (inputRecord.EventType == MOUSE_EVENT) {
-			MOUSE_EVENT_RECORD& mer = inputRecord.Event.MouseEvent;
+			if (inputRecord.EventType == MOUSE_EVENT) {
+				MOUSE_EVENT_RECORD& mer = inputRecord.Event.MouseEvent;
 
-			if (mer.dwMousePosition.Y == 1 && (mer.dwMousePosition.X >= 42 && mer.dwMousePosition.X <= 47)) {
-				if (lMouse.keyDown()) {
-					wchar_t filenameBuffer[1024];
-					GetCurrentDirectory(1024, filenameBuffer);
-					std::wstring filePath = std::wstring(filenameBuffer) + L"\\shockSettings.txt";
-					ShellExecute(NULL, L"open", L"notepad.exe", filePath.c_str(), NULL, SW_SHOWNORMAL);
+				if (mer.dwMousePosition.Y == 1 && (mer.dwMousePosition.X >= 42 && mer.dwMousePosition.X <= 49)) {
+					if (lMouse.keyDown()) {
+						wchar_t filenameBuffer[1024];
+						GetCurrentDirectory(1024, filenameBuffer);
+						std::wstring filePath = std::wstring(filenameBuffer) + L"\\shockSettings.txt";
+						ShellExecute(NULL, L"open", L"notepad.exe", filePath.c_str(), NULL, SW_SHOWNORMAL);
+					}
 				}
 			}
 		}
-
+	
 		Sleep(1);
 
 	};

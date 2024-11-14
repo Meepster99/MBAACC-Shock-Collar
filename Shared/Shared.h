@@ -78,6 +78,8 @@
 #define CYAN "\x1b[96m"
 #define WHITE "\x1b[97m"
 
+#define CLEARHORIZONTAL "\x1b[K"
+
 
 class KeyState {
 public:
@@ -261,6 +263,7 @@ public:
 	bool sendShock(int player, int strength, int duration, bool quiet = false);
 	void sendShock(PipePacket packet);
 
+	void displayModifiers(std::optional<PipePacket> packet = std::optional<PipePacket>());
 	void displayStatus();
 	void readSettings(int depth = 0);
 

@@ -56,7 +56,6 @@ bool sendPostRequest(const std::string& headers, const std::string& body, bool q
 	HINTERNET hInternet, hConnect, hRequest;
 	DWORD bytesRead;
 
-	// Initialize WinINet
 	hInternet = InternetOpen(L"WinINet Example", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
 	if (hInternet == NULL) {
 		if (!quiet) {
@@ -65,7 +64,6 @@ bool sendPostRequest(const std::string& headers, const std::string& body, bool q
 		return false;
 	}
 
-	// Connect to the server
 	hConnect = InternetConnect(hInternet, L"api.openshock.app", INTERNET_DEFAULT_HTTPS_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
 	if (hConnect == NULL) {
 		if (!quiet) {
@@ -143,6 +141,26 @@ void CollarManager::setToken(const char* token_) {
 	strncpy_s(token, token_, 255);
 }
 
+void CollarManager::displayModifiers(std::optional<PipePacket> packet) {
+	
+	if (packet.has_value()) {
+		PipePacket p = packet.value();
+		printf(CLEARHORIZONTAL "Max Damage Value      : %4d %4d\n", (int)maxDamageVal, p.getStrength());
+		printf(CLEARHORIZONTAL "Counter Hit Modifier  : %4.2f %s\n", counterHitMod, p.counterhit ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Screen Shake Modifier : %4.2f %s\n", screenShakeMod, p.screenshake ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Bounce Modifier       : %4.2f %s\n", bounceMod, p.bounce ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Reduce Fail Modifier  : %4.2f %s\n", reduceFailMod, p.reduceFail ? RED "TERVE!" RESET : "");
+	} else {
+		printf(CLEARHORIZONTAL "Max Damage Value      : %4d\n", (int)maxDamageVal);
+		printf(CLEARHORIZONTAL "Counter Hit Modifier  : %4.2f\n", counterHitMod);
+		printf(CLEARHORIZONTAL "Screen Shake Modifier : %4.2f\n", screenShakeMod);
+		printf(CLEARHORIZONTAL "Bounce Modifier       : %4.2f\n", bounceMod);
+		printf(CLEARHORIZONTAL "Reduce Fail Modifier  : %4.2f\n", reduceFailMod);
+	}
+	
+	printf("\n");
+}
+
 void CollarManager::displayStatus() {
 
 	printf("CollarManager Status:\n");
@@ -157,13 +175,8 @@ void CollarManager::displayStatus() {
 	collar2.displayStatus();
 	printf("\n");
 
-	printf("Max Damage Value      : %d\n", (int)maxDamageVal);
-	printf("Counter Hit Modifier  : %4.2f\n", counterHitMod);
-	printf("Screen Shake Modifier : %4.2f\n", screenShakeMod);
-	printf("Bounce Modifier       : %4.2f\n", bounceMod);
-	printf("Reduce Fail Modifier  : %4.2f\n", reduceFailMod);
-
-	printf("\n");
+	displayModifiers();
+	
 }
 
 void CollarManager::readSettings(int depth) {
@@ -392,7 +405,11 @@ void CollarManager::sendShock(PipePacket packet) {
 
 	strength = (collars[player].maxShock - collars[player].minShock) * strength + collars[player].minShock;
 
-	printf("P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
+	// terve!
+
+	printf("\x1b[6A");
+	displayModifiers(packet);
+	printf(CLEARHORIZONTAL "P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
 
 	sendShock(player, strength, duration, true);
 }
