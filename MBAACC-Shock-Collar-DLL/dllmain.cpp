@@ -150,11 +150,6 @@ void updateBattleSceneCallback() {
 		}
 	}
 	
-	//PipePacket tempPacket;
-	//tempPacket.errorBit = 1;
-	//tempPacket.error = 1234;
-	//pipe.push(tempPacket);
-
 	for (int player = 0; player < 2; player++) {
 
 		if (prevNotInCombo[1-player]) {
@@ -236,9 +231,9 @@ void threadFunc() {
 		return;
 	}
 
+	// is this waitforsingleobj better or worse than peeking and then sleeping?
 	DWORD result = WaitForSingleObject(hEvent, INFINITE); 
 	CloseHandle(hEvent);
-
 	
 	temp.__unused = 42;
 	pipe.push(temp);

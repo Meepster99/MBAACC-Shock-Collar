@@ -32,7 +32,6 @@ float safeStof(const std::string& s) {
 	return res;
 }
 
-
 std::string censorString(const std::string& s) {
 	std::string res = s;
 
@@ -143,6 +142,8 @@ void CollarManager::setToken(const char* token_) {
 
 void CollarManager::displayModifiers(std::optional<PipePacket> packet) {
 	
+	// Terve!
+
 	if (packet.has_value()) {
 		PipePacket p = packet.value();
 		printf(CLEARHORIZONTAL "Max Damage Value      : %4d %4d\n", (int)maxDamageVal, p.getStrength());
@@ -379,7 +380,7 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 	return res;
 }
 
-void CollarManager::sendShock(PipePacket packet) {
+void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 
 	if (packet.errorBit) {
 		printf("data: %08X %d                                       \n", packet.error, packet.error);
@@ -405,12 +406,19 @@ void CollarManager::sendShock(PipePacket packet) {
 
 	strength = (collars[player].maxShock - collars[player].minShock) * strength + collars[player].minShock;
 
-	// terve!
+	
 
 	printf("\x1b[6A");
 	displayModifiers(packet);
-	printf(CLEARHORIZONTAL "P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
+	//printf(CLEARHORIZONTAL "P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
 
+	const char* const arrowColors[3] = { RED, DARKRED, MAGENTA };
+	const char arrowSymbols[3] = { '-', '=', '~' };
+	int shockModulo = shockDisplayCount % 3;
+
+	printf(CLEARHORIZONTAL "%s%c>" RESET " %s collar %d with a strength of %d for %dms\r" RESET, arrowColors[shockModulo], arrowSymbols[shockModulo], getShockTypeVerb(collars[player].shockType), player + 1, (int)strength, (int)duration);
+
+	
 	sendShock(player, strength, duration, true);
 }
 

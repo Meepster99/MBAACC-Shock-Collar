@@ -10,6 +10,7 @@
 #include <optional>
 #include <wininet.h>
 #include <timeapi.h>
+#include <chrono>
 #pragma comment(lib, "wininet.lib")
 #pragma comment(lib, "winmm.lib")
 
@@ -70,6 +71,7 @@
 
 #define RESET "\x1b[0m\x1b[97m" // an extra white is tacked on here just to make it the default color
 
+#define DARKRED "\x1b[31m"
 #define RED "\x1b[91m"
 #define GREEN "\x1b[92m"
 #define YELLOW "\x1b[93m"
@@ -79,7 +81,6 @@
 #define WHITE "\x1b[97m"
 
 #define CLEARHORIZONTAL "\x1b[K"
-
 
 class KeyState {
 public:
@@ -166,6 +167,10 @@ inline const char* getShockTypeVerb(ShockType t) {
 	}
 
 	return shockTypeVerbs[temp];
+}
+
+inline long long getMilliseconds() {
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
 // -----
@@ -261,7 +266,7 @@ public:
 	void setToken(const char* token_);
 
 	bool sendShock(int player, int strength, int duration, bool quiet = false);
-	void sendShock(PipePacket packet);
+	void sendShock(PipePacket packet, int shockDisplayCount = 0);
 
 	void displayModifiers(std::optional<PipePacket> packet = std::optional<PipePacket>());
 	void displayStatus();

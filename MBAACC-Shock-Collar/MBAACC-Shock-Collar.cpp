@@ -12,7 +12,6 @@
 #include "resource.h"
 #pragma comment(lib, "wininet.lib")
 #include "../Shared/Shared.h"
-
 #include "../Shared/version.h"
 
 static_assert(sizeof(void*) == 4, "program must be compiled in 32 bit mode");
@@ -176,7 +175,6 @@ void SetConsoleSize(int width, int height) {
 	bufferSize.X = width;
 	bufferSize.Y = height;
 	SetConsoleScreenBufferSize(hConsole, bufferSize);
-
 }
 
 void clearConsole() {
@@ -297,7 +295,8 @@ int main() {
 	pipe.initServer();
 
 	unsigned tick = 0;
-	unsigned lastShockTick = 0;
+	long long lastShockTime = 0;
+	int shockDisplayCount = 0;
 
 	while (true) {
 		tick++;
@@ -363,6 +362,7 @@ int main() {
 				continue;
 			}
 			
+			// i can take the max values of everything here. but should i?
 			//playerPackets[temp.player].value().strength = MAX(playerPackets[temp.player].value().strength, temp.strength);
 			
 			recvData = pipe.pop();
@@ -371,15 +371,23 @@ int main() {
 		for (int i = 0; i < 2; i++) {
 			if (playerPackets[i].has_value()) {
 				
-				collarManager.sendShock(playerPackets[i].value());
-				
-				lastShockTick = tick;
+				collarManager.sendShock(playerPackets[i].value(), shockDisplayCount);
+
+				lastShockTime = getMilliseconds();
+				shockDisplayCount++;
 			}
 		}
 
-		if (tick - lastShockTick == 500) {
+		long long tempTimeDelta = getMilliseconds() - lastShockTime;
+		if (shockDisplayCount != 0 && tempTimeDelta > (16 * 2)) {
+			printf("  \r"); // clear the little arrow at the start of the shock
+		}
+
+		if (shockDisplayCount != 0 && tempTimeDelta > 1000) {
 			printf("\x1b[6A");
 			collarManager.displayModifiers();
+			printf(CLEARHORIZONTAL);
+			shockDisplayCount = 0;
 		}
 
 		// readconsoleinput wasnt blocking while i was plugged in, but was on battery?
