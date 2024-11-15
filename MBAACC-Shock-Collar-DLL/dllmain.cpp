@@ -126,11 +126,14 @@ void updateBattleSceneCallback() {
 
 			uint32_t hitFlags = *(uint32_t*)(attackDataPointer + 0x3C);
 
+			BYTE effectType = *(BYTE*)(attackDataPointer + 0x30);
+
 			packet.player = player;
 			packet.counterhit = (*(BYTE*)(playerAddr + 0x194)) == 0;
 			packet.screenshake = !!(hitFlags & 0b01000000);
 			packet.bounce = bounceDamage;
 			packet.reduceFail = reduceStatus == 1;
+			packet.electricAttack = effectType == 3;
 		
 			// todo, need crit
 

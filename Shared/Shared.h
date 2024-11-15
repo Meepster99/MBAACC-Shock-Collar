@@ -196,7 +196,7 @@ typedef struct PipePacket {
 			uint8_t bounce : 1;
 			uint8_t crit : 1; 
 			uint8_t reduceFail : 1;
-			uint8_t _unused4 : 1;
+			uint8_t electricAttack : 1;
 			
 			uint8_t strength : 8; // move damage. this can be reduced to 
 
@@ -280,6 +280,7 @@ public:
 	float screenShakeMod = 0.0f;
 	float bounceMod = 0.0f;
 	float reduceFailMod = 0.0f;
+	float electricAttackMod = 0.0f;
 
 	union {
 		Collar collars[2];

@@ -236,7 +236,7 @@ int main() {
 
 	SetConsoleTitle(L"MBAACC-Shock-Collar");
 
-	SetConsoleSize(85, 30);
+	SetConsoleSize(85, 33);
 
 	std::atexit(onExit);
 	std::signal(SIGTERM, sigtermHandle); 
@@ -384,7 +384,7 @@ int main() {
 		}
 
 		if (shockDisplayCount != 0 && tempTimeDelta > 1000) {
-			printf("\x1b[6A");
+			printf("\x1b[7A");
 			collarManager.displayModifiers();
 			printf(CLEARHORIZONTAL);
 			shockDisplayCount = 0;

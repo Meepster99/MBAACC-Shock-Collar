@@ -146,17 +146,19 @@ void CollarManager::displayModifiers(std::optional<PipePacket> packet) {
 
 	if (packet.has_value()) {
 		PipePacket p = packet.value();
-		printf(CLEARHORIZONTAL "Max Damage Value      : %4d %4d\n", (int)maxDamageVal, p.getStrength());
-		printf(CLEARHORIZONTAL "Counter Hit Modifier  : %4.2f %s\n", counterHitMod, p.counterhit ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Screen Shake Modifier : %4.2f %s\n", screenShakeMod, p.screenshake ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Bounce Modifier       : %4.2f %s\n", bounceMod, p.bounce ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Reduce Fail Modifier  : %4.2f %s\n", reduceFailMod, p.reduceFail ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Max Damage Value          : %4d %4d\n", (int)maxDamageVal, p.getStrength());
+		printf(CLEARHORIZONTAL "Counter Hit Modifier      : %4.2f %s\n", counterHitMod, p.counterhit ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f %s\n", screenShakeMod, p.screenshake ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f %s\n", bounceMod, p.bounce ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Reduce Fail Modifier      : %4.2f %s\n", reduceFailMod, p.reduceFail ? RED "TERVE!" RESET : "");
+		printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f %s\n", electricAttackMod, p.electricAttack ? RED "TERVE!" RESET : "");
 	} else {
-		printf(CLEARHORIZONTAL "Max Damage Value      : %4d\n", (int)maxDamageVal);
-		printf(CLEARHORIZONTAL "Counter Hit Modifier  : %4.2f\n", counterHitMod);
-		printf(CLEARHORIZONTAL "Screen Shake Modifier : %4.2f\n", screenShakeMod);
-		printf(CLEARHORIZONTAL "Bounce Modifier       : %4.2f\n", bounceMod);
-		printf(CLEARHORIZONTAL "Reduce Fail Modifier  : %4.2f\n", reduceFailMod);
+		printf(CLEARHORIZONTAL "Max Damage Value          : %4d\n", (int)maxDamageVal);
+		printf(CLEARHORIZONTAL "Counter Hit Modifier      : %4.2f\n", counterHitMod);
+		printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f\n", screenShakeMod);
+		printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f\n", bounceMod);
+		printf(CLEARHORIZONTAL "Reduce Fail Modifier      : %4.2f\n", reduceFailMod);
+		printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f\n", electricAttackMod);
 	}
 	
 	printf("\n");
@@ -197,6 +199,8 @@ void CollarManager::readSettings(int depth) {
 		std::ofstream outFile("shockSettings.txt");
 
 		std::string exampleFile =
+			"# <3\n"
+			"\n"
 			"# your openshock api token\n"
 			"token : put it here please :)\n"
 			"\n"
@@ -227,6 +231,8 @@ void CollarManager::readSettings(int depth) {
 			"screenShake : 0.1\n"
 			"bounce : 0.1\n"
 			"reduceFail : 0.1\n"
+			"electricAttack : 0.1\n"
+			"\n"
 			;
 
 		outFile << exampleFile;
@@ -283,6 +289,8 @@ void CollarManager::readSettings(int depth) {
 					maxDamageVal = MAX(safeStof(val.c_str()), 0.0f);
 				} else if (key == "reducefail") {
 					reduceFailMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
+				} else if (key == "electricattack") {
+					electricAttackMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
 				}
 
 				continue;
@@ -399,6 +407,7 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 	modVal = MAX(modVal, packet.screenshake ? screenShakeMod : 0.0f);
 	modVal = MAX(modVal, packet.bounce      ? bounceMod      : 0.0f);
 	modVal = MAX(modVal, packet.reduceFail  ? reduceFailMod  : 0.0f);
+	modVal = MAX(modVal, packet.electricAttack ? electricAttackMod : 0.0f);
 
 	modVal = CLAMP(modVal, 0.0f, 1.0f);
 
@@ -407,8 +416,7 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 	strength = (collars[player].maxShock - collars[player].minShock) * strength + collars[player].minShock;
 
 	
-
-	printf("\x1b[6A");
+	printf("\x1b[7A");
 	displayModifiers(packet);
 	//printf(CLEARHORIZONTAL "P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
 
@@ -418,7 +426,6 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 
 	printf(CLEARHORIZONTAL "%s%c>" RESET " %s collar %d with a strength of %d for %dms\r" RESET, arrowColors[shockModulo], arrowSymbols[shockModulo], getShockTypeVerb(collars[player].shockType), player + 1, (int)strength, (int)duration);
 
-	
 	sendShock(player, strength, duration, true);
 }
 
