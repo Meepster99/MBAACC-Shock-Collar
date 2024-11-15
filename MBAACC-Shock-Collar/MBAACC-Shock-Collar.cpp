@@ -192,7 +192,7 @@ void renderConsole() {
 
 	clearConsole();
 
-	printf("MBAACC Shock Collar Version: %s%s" RESET ". " YELLOW "<3\n" RESET, !BLEEDING ? RED : "", GIT_VERSION);
+	printf("MBAACC Shock Collar Version: %s%s" RESET ". " YELLOW "<3\n" RESET, BLEEDING ? RED : "", GIT_VERSION);
 
 	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "<here>" RESET " to open it. Make sure to save!\n");
 	

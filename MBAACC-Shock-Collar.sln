@@ -18,6 +18,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Shared\version.h = Shared\version.h
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MBAACC-Shock-Collar-Launcher", "MBAACC-Shock-Collar-Launcher\MBAACC-Shock-Collar-Launcher.vcxproj", "{257122BD-DE98-4AB8-832B-15768808F401}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E63A40FE-8C4A-49B6-B2E1-FEFC46A20CC8} = {E63A40FE-8C4A-49B6-B2E1-FEFC46A20CC8}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -42,6 +47,14 @@ Global
 		{AEB7E4D3-1285-4375-94B0-070873C17DFD}.Release|x64.Build.0 = Release|x64
 		{AEB7E4D3-1285-4375-94B0-070873C17DFD}.Release|x86.ActiveCfg = Release|Win32
 		{AEB7E4D3-1285-4375-94B0-070873C17DFD}.Release|x86.Build.0 = Release|Win32
+		{257122BD-DE98-4AB8-832B-15768808F401}.Debug|x64.ActiveCfg = Debug|x64
+		{257122BD-DE98-4AB8-832B-15768808F401}.Debug|x64.Build.0 = Debug|x64
+		{257122BD-DE98-4AB8-832B-15768808F401}.Debug|x86.ActiveCfg = Debug|Win32
+		{257122BD-DE98-4AB8-832B-15768808F401}.Debug|x86.Build.0 = Debug|Win32
+		{257122BD-DE98-4AB8-832B-15768808F401}.Release|x64.ActiveCfg = Release|x64
+		{257122BD-DE98-4AB8-832B-15768808F401}.Release|x64.Build.0 = Release|x64
+		{257122BD-DE98-4AB8-832B-15768808F401}.Release|x86.ActiveCfg = Release|Win32
+		{257122BD-DE98-4AB8-832B-15768808F401}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
