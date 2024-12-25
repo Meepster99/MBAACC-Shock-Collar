@@ -1,6 +1,8 @@
 
 #include "Shared.h"
 
+// hi future maddy. offset 0x1A5 shows when an attack actually hit. fool
+
 std::string strip(const std::string& s) {
 	std::string res = s;
 	std::regex trim_re("^\\s+|\\s+$");
