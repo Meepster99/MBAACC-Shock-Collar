@@ -2,6 +2,7 @@
 #include "Shared.h"
 
 // hi future maddy. offset 0x1A5 shows when an attack actually hit. fool
+// 0x176 has throws. i believe
 
 std::string strip(const std::string& s) {
 	std::string res = s;
@@ -150,17 +151,17 @@ void CollarManager::displayModifiers(std::optional<PipePacket> packet) {
 		PipePacket p = packet.value();
 		printf(CLEARHORIZONTAL "Max Damage Value          : %4d %4d\n", (int)maxDamageVal, p.getStrength());
 		printf(CLEARHORIZONTAL "Counter Hit Modifier      : %4.2f %s\n", counterHitMod, p.counterhit ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f %s\n", screenShakeMod, p.screenshake ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f %s\n", bounceMod, p.bounce ? RED "TERVE!" RESET : "");
+		//printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f %s\n", screenShakeMod, p.screenshake ? RED "TERVE!" RESET : "");
+		//printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f %s\n", bounceMod, p.bounce ? RED "TERVE!" RESET : "");
 		printf(CLEARHORIZONTAL "Reduce Fail Modifier      : %4.2f %s\n", reduceFailMod, p.reduceFail ? RED "TERVE!" RESET : "");
-		printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f %s\n", electricAttackMod, p.electricAttack ? RED "TERVE!" RESET : "");
+		//printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f %s\n", electricAttackMod, p.electricAttack ? RED "TERVE!" RESET : "");
 	} else {
 		printf(CLEARHORIZONTAL "Max Damage Value          : %4d\n", (int)maxDamageVal);
 		printf(CLEARHORIZONTAL "Counter Hit Modifier      : %4.2f\n", counterHitMod);
-		printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f\n", screenShakeMod);
-		printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f\n", bounceMod);
+		//printf(CLEARHORIZONTAL "Screen Shake Modifier     : %4.2f\n", screenShakeMod);
+		//printf(CLEARHORIZONTAL "Bounce Modifier           : %4.2f\n", bounceMod);
 		printf(CLEARHORIZONTAL "Reduce Fail Modifier      : %4.2f\n", reduceFailMod);
-		printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f\n", electricAttackMod);
+		//printf(CLEARHORIZONTAL "Electric Attack Modifier  : %4.2f\n", electricAttackMod);
 	}
 	
 	printf("\n");
@@ -172,13 +173,11 @@ void CollarManager::displayStatus() {
 	
 	printf("\tToken: %s\n\n", token[0] == '\0' ? "???" : censorString(token).c_str());
 
-	printf("Collar 1:\n");
-	collar1.displayStatus();
-	printf("\n");
-	
-	printf("Collar 2:\n");
-	collar2.displayStatus();
-	printf("\n");
+	for (int i = 0; i < 4; i++) {
+		printf("Collar %d (Team %d):\n", i + 1, (i & 1) + 1);
+		collars[i].displayStatus();
+		printf("\n");
+	}
 
 	displayModifiers();
 	
@@ -206,17 +205,29 @@ void CollarManager::readSettings(int depth) {
 			"# your openshock api token\n"
 			"token : put it here please :)\n"
 			"\n"
-			"# P1 Shocker ID\n"
+			"# P1 Shocker ID (Team 1)\n"
 			"p1ID : put it here please :)\n"
 			"p1MinShock : 10 # min shock. shock values are 0-100\n"
 			"p1MaxShock : 20 # max shock\n"
 			"p1Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
-			"# P2 Shocker ID\n"
+			"# P2 Shocker ID (Team 2)\n"
 			"p2ID : put it here please :)\n"
 			"p2MinShock : 10 # min shock\n"
 			"p2MaxShock : 20 # max shock\n"
 			"p2Type: Shock # can be either Shock, Sound, or Vibrate\n"
+			"\n"
+			"# P3 Shocker ID (Team 1)\n"
+			"p3ID : put it here please :)\n"
+			"p3MinShock : 10 # min shock\n"
+			"p3MaxShock : 20 # max shock\n"
+			"p3Type: Shock # can be either Shock, Sound, or Vibrate\n"
+			"\n"
+			"# P4 Shocker ID (Team 2)\n"
+			"p4ID : put it here please :)\n"
+			"p4MinShock : 10 # min shock\n"
+			"p4MaxShock : 20 # max shock\n"
+			"p4Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
 			"# misc settings\n"
 			"maxDamageVal : 3000 # this damage value will give maxShock.\n"
@@ -230,10 +241,10 @@ void CollarManager::readSettings(int depth) {
 			"# where val is the MAX of any triggered values\n"
 			"\n"
 			"counterHit : 0.1\n"
-			"screenShake : 0.1\n"
-			"bounce : 0.1\n"
+			//"screenShake : 0.1\n"
+			//"bounce : 0.1\n"
 			"reduceFail : 0.1\n"
-			"electricAttack : 0.1\n"
+			//"electricAttack : 0.1\n"
 			"\n"
 			;
 
@@ -275,23 +286,34 @@ void CollarManager::readSettings(int depth) {
 
 			int playerIndex = -1;
 
-			if (key[1] == '1') {
-				playerIndex = 0;
-			} else if (key[1] == '2') {
-				playerIndex = 1;
-			} else {
+			switch (key[1]) {
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+				playerIndex = key[1] - '1';
+				break;
+			default:
+				break;
+			}
 
+			if (playerIndex == -1) {
 				if (key == "counterhit") {
 					counterHitMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
-				} else if (key == "screenshake") {
+				}
+				else if (key == "screenshake") {
 					screenShakeMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
-				} else if (key == "bounce") {
+				}
+				else if (key == "bounce") {
 					bounceMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
-				} else if (key == "maxdamageval") {
+				}
+				else if (key == "maxdamageval") {
 					maxDamageVal = MAX(safeStof(val.c_str()), 0.0f);
-				} else if (key == "reducefail") {
+				}
+				else if (key == "reducefail") {
 					reduceFailMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
-				} else if (key == "electricattack") {
+				}
+				else if (key == "electricattack") {
 					electricAttackMod = CLAMP(safeStof(val.c_str()), 0.0f, 1.0f);
 				}
 
@@ -328,7 +350,7 @@ void CollarManager::readSettings(int depth) {
 
 	inFile.close();
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 4; i++) {
 
 		int min = collars[i].minShock;
 		int max = collars[i].maxShock;
@@ -406,10 +428,10 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 	float modVal = 0.0f;
 	
 	modVal = MAX(modVal, packet.counterhit  ? counterHitMod  : 0.0f);
-	modVal = MAX(modVal, packet.screenshake ? screenShakeMod : 0.0f);
-	modVal = MAX(modVal, packet.bounce      ? bounceMod      : 0.0f);
+	//modVal = MAX(modVal, packet.screenshake ? screenShakeMod : 0.0f);
+	//modVal = MAX(modVal, packet.bounce      ? bounceMod      : 0.0f);
 	modVal = MAX(modVal, packet.reduceFail  ? reduceFailMod  : 0.0f);
-	modVal = MAX(modVal, packet.electricAttack ? electricAttackMod : 0.0f);
+	//modVal = MAX(modVal, packet.electricAttack ? electricAttackMod : 0.0f);
 
 	modVal = CLAMP(modVal, 0.0f, 1.0f);
 
@@ -418,7 +440,7 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 	strength = (collars[player].maxShock - collars[player].minShock) * strength + collars[player].minShock;
 
 	
-	printf("\x1b[7A");
+	printf("\x1b[4A"); // move up by 7 lines
 	displayModifiers(packet);
 	//printf(CLEARHORIZONTAL "P%d S:%3d D:%3d M:%4.2f\r", player + 1, (int)strength, (int)duration, modVal);
 

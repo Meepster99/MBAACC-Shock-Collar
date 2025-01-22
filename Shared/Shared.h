@@ -175,6 +175,7 @@ inline long long getMilliseconds() {
 
 // -----
 
+#pragma pack(push,1)
 typedef struct PipePacket {
 	PipePacket() {}
 
@@ -190,15 +191,22 @@ typedef struct PipePacket {
 
 		struct {
 			uint8_t __unusedErrorBit : 1;
-			uint8_t player : 1;
+			/*uint8_t player : 1;
 			uint8_t counterhit : 1;
 			uint8_t screenshake : 1;
 			uint8_t bounce : 1;
 			uint8_t crit : 1; 
 			uint8_t reduceFail : 1;
 			uint8_t electricAttack : 1;
+			*/
+			uint8_t player : 2;
+			uint8_t counterhit : 1;
+			uint8_t reduceFail : 1;
+
+			uint8_t omfg : 3;
+
 			
-			uint8_t strength : 8; // move damage. this can be reduced to 
+			uint8_t strength : 8;
 
 		};
 
@@ -214,6 +222,7 @@ typedef struct PipePacket {
 	
 
 } PipePacket;
+#pragma pack(pop)
 
 static_assert(sizeof(PipePacket) == 2, "PipePacket was not the expected size ");
 
@@ -283,10 +292,12 @@ public:
 	float electricAttackMod = 0.0f;
 
 	union {
-		Collar collars[2];
+		Collar collars[4];
 		struct {
 			Collar collar1;
 			Collar collar2;
+			Collar collar3;
+			Collar collar4;
 		};
 	};
 

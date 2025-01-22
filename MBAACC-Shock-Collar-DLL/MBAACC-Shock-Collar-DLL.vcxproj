@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shared\DebugInfo.h" />
     <ClInclude Include="..\Shared\Shared.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />

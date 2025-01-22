@@ -196,7 +196,7 @@ void renderConsole() {
 
 	printf(WHITE "Press " CYAN "'R'" RESET " to reload the config file. Click " CYAN "<here>" RESET " to open it. Make sure to save!\n");
 	
-	printf("Press " CYAN "'1'" RESET " or " CYAN "'2'" RESET " to send a min strength pulse. Hold " CYAN "Shift" RESET " for max strength.\n");
+	printf("Press " CYAN "'1/2/3/4'" RESET " to send a min strength pulse. Hold " CYAN "Shift" RESET " for max strength.\n");
 
 	printf("\n");
 
@@ -236,7 +236,7 @@ int main() {
 
 	SetConsoleTitle(L"MBAACC-Shock-Collar");
 
-	SetConsoleSize(85, 33);
+	SetConsoleSize(85, 45);
 
 	std::atexit(onExit);
 	std::signal(SIGTERM, sigtermHandle); 
@@ -384,7 +384,7 @@ int main() {
 		}
 
 		if (shockDisplayCount != 0 && tempTimeDelta > 1000) {
-			printf("\x1b[7A");
+			printf("\x1b[4A");
 			collarManager.displayModifiers();
 			printf(CLEARHORIZONTAL);
 			shockDisplayCount = 0;

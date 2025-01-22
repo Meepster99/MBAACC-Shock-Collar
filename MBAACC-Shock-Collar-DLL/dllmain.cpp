@@ -1,5 +1,13 @@
 
+
+#include <ws2tcpip.h>
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+
+		
 #include "../Shared/Shared.h"
+#include "../Shared/DebugInfo.h"
+
 
 Pipe pipe;
 
@@ -9,6 +17,57 @@ some thoughts
 counter hits, last arcs, and maybe ADs should hurt more?
 
 */
+
+// no clue why, but adding this logging in made everything,,, much much slower?
+
+void __stdcall ___log(const char* msg) {
+	const char* ipAddress = "127.0.0.1";
+	unsigned short port = 17474;
+
+	int msgLen = strlen(msg);
+
+	const char* message = msg;
+
+	WSADATA wsaData;
+	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (result != 0) {
+		return;
+	}
+
+	SOCKET sendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sendSocket == INVALID_SOCKET) {
+		WSACleanup();
+		return;
+	}
+
+	sockaddr_in destAddr;
+	destAddr.sin_family = AF_INET;
+	destAddr.sin_port = htons(port);
+	if (inet_pton(AF_INET, ipAddress, &destAddr.sin_addr) <= 0) {
+		closesocket(sendSocket);
+		WSACleanup();
+		return;
+	}
+
+	int sendResult = sendto(sendSocket, message, msgLen, 0, (sockaddr*)&destAddr, sizeof(destAddr));
+	if (sendResult == SOCKET_ERROR) {
+		closesocket(sendSocket);
+		WSACleanup();
+		return;
+	}
+
+	closesocket(sendSocket);
+	WSACleanup();
+}
+
+void __stdcall log(const char* format, ...) {
+	char buffer[1024];
+	va_list args;
+	va_start(args, format);
+	vsnprintf(buffer, 1024, format, args);
+	___log(buffer);
+	va_end(args);
+}
 
 void __stdcall patchMemcpy(auto dst, auto src, size_t n) {
 
@@ -48,6 +107,16 @@ void __stdcall patchByte(auto addr, const BYTE byte) {
 
 // -----
 
+PlayerData* players[4] = {
+	(PlayerData*)(0x00555130 + (0 * 0xAFC)),
+	(PlayerData*)(0x00555130 + (1 * 0xAFC)),
+	(PlayerData*)(0x00555130 + (2 * 0xAFC)),
+	(PlayerData*)(0x00555130 + (3 * 0xAFC)),
+};
+
+// -----
+
+/*
 void updateBattleSceneCallback() {
 
 	DWORD playerAddr;
@@ -174,10 +243,77 @@ void updateBattleSceneCallback() {
 	}
 	
 }
+*/
+
+void updateBattleSceneCallback() {
+
+	// you can reduce until one frame after, which is why things are staggered
+
+	static std::optional<PipePacket> packetQueue[4];
+
+	for (int i = 0; i < 4; i++) {
+		PlayerData* player = players[i];
+
+		if (player->reduce != 2 && packetQueue[i].has_value()) {
+			pipe.push(packetQueue[i].value());
+		}
+
+		packetQueue[i].reset();
+	}
+
+	static BYTE prevThrowState[4] = { 0, 0, 0, 0 }; // tbh there has to be a better way to do rising edge bs
+	static int playerHealth[4] = { 11400, 11400, 11400, 11400 };
+	// i do not like proration.
+	// instead, im just going to scale down shocks as time goes on
+	static float shockMult[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static int shockResetTimer[4] = {0, 0, 0, 0};
+
+	for (int i = 0; i < 4; i++) {
+
+		PlayerData* player = players[i];
+		PipePacket packet;
+		
+		packet.player = i & 3;
+
+		if (!prevThrowState[i] && player->throwFlag) {
+			packet.setStrength(1000); // i just,, ugh. ugh
+			packetQueue[i] = packet;
+			//log("throw");
+		} else if (player->recievedHit) {
+			if (player->recievingAttackPtr != NULL) {
+				AttackData* atk = player->recievingAttackPtr;
+
+				// proration is stored in the attacker. with 2v2, i have no idea how im going to track recieved bs
+				// im just going to store my own thing here, its def not accurate. i do not care
+
+				packet.setStrength((int)((float)atk->damage * shockMult[i]));
+
+				packet.counterhit = (player->counterhitState != 0);
+				packet.reduceFail = (player->reduce == 1);
+
+				packetQueue[i] = packet;
+				
+				shockMult[i] *= 0.925f; // this number isnt real, and i made it up
+				shockResetTimer[i] = 60;
+			}
+		}
+
+		playerHealth[i] = player->health;
+		prevThrowState[i] = player->throwFlag;
+		
+		if (shockResetTimer[i] > 0) {
+			shockResetTimer[i]--;
+			if (shockResetTimer[i] == 0) {
+				shockMult[i] = 1.0f;
+			}
+		}
+
+	}
+}
 
 // -----
 
-__declspec(naked) void _naked_updateBattleSceneCallback() {
+__declspec(naked) void _naked_updateBattleSceneCallback1() {
 	
 	PUSH_ALL;
 	updateBattleSceneCallback();
@@ -194,6 +330,25 @@ __declspec(naked) void _naked_updateBattleSceneCallback() {
 	__asm {
 		ret;
 	}
+}
+
+__declspec(naked) void _naked_updateBattleSceneCallback2() {
+
+	__asm _emit 0x55;
+
+	__asm _emit 0x8B;
+	__asm _emit 0xEC;
+
+	__asm _emit 0x83;
+	__asm _emit 0xE4;
+	__asm _emit 0xF8;
+
+	PUSH_ALL;
+	updateBattleSceneCallback();
+	POP_ALL;
+
+	emitJump(0x0046dfd6);
+	
 }
 
 // -----
@@ -215,7 +370,8 @@ void threadFunc() {
 
 	*/
 
-	patchJump(0x004540b8, _naked_updateBattleSceneCallback);
+	//patchJump(0x004540b8, _naked_updateBattleSceneCallback1);
+	patchJump(0x0046dfd0, _naked_updateBattleSceneCallback2);
 
 	// doing this in here is not ideal, but unloading the dll while inside dll code is a huge risk. at least something being blocking is actually helpful now
 	// this is so nice, but wouldnt be feasable on larger projects
@@ -241,8 +397,11 @@ void threadFunc() {
 	temp.__unused = 42;
 	pipe.push(temp);
 
-	BYTE code[5] = { 0xB8, 0x01, 0x00, 0x00, 0x00 };
-	patchMemcpy(0x004540b8, &code, 5);
+	//BYTE code[5] = { 0xB8, 0x01, 0x00, 0x00, 0x00 };
+	//patchMemcpy(0x004540b8, &code, 5);
+
+	BYTE code[5] = { 0x55, 0x8B, 0xEC, 0x83, 0xE4 };
+	patchMemcpy(0x0046dfd0, &code, 5);
 	
 	if (pipe.clientHandle) {
 		CloseHandle(pipe.clientHandle);
@@ -270,4 +429,3 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	}
 	return TRUE;
 }
-
