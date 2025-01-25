@@ -275,6 +275,22 @@ void updateBattleSceneCallback() {
 		
 		packet.player = i & 3;
 
+		// simpler solution, more boring
+
+		if (player->health < playerHealth[i]) {
+			int delta = playerHealth[i] - player->health;
+
+			packet.setStrength(delta);
+
+			packet.counterhit = (player->counterhitState != 0);
+			packet.reduceFail = (player->reduce == 1);
+
+			packetQueue[i] = packet;
+		}
+
+		playerHealth[i] = player->health;
+
+		/*
 		if (!prevThrowState[i] && player->throwFlag) {
 			packet.setStrength(1000); // i just,, ugh. ugh
 			packetQueue[i] = packet;
@@ -307,6 +323,7 @@ void updateBattleSceneCallback() {
 				shockMult[i] = 1.0f;
 			}
 		}
+		*/
 
 	}
 }

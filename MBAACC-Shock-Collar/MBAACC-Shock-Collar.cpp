@@ -286,6 +286,8 @@ int main() {
 	KeyState rKey('R');
 	KeyState oneKey('1');
 	KeyState twoKey('2');
+	KeyState threeKey('3');
+	KeyState fourKey('4');
 	KeyState shiftKey(VK_SHIFT);
 	KeyState lMouse(VK_LBUTTON);
 
@@ -324,10 +326,17 @@ int main() {
 
 		bool oneKeyDown = oneKey.keyDown();
 		bool twoKeyDown = twoKey.keyDown();
+		bool threeKeyDown = threeKey.keyDown();
+		bool fourKeyDown = fourKey.keyDown();
 
-		if (oneKeyDown || twoKeyDown) {
+		if (oneKeyDown || twoKeyDown || threeKeyDown || fourKeyDown) {
 
-			int collarIndex = oneKeyDown ? 0 : 1;
+			int collarIndex = -1;
+
+			if (oneKeyDown) { collarIndex = 0; }
+			if (twoKeyDown) { collarIndex = 1; }
+			if (threeKeyDown) { collarIndex = 2; }
+			if (fourKeyDown) { collarIndex = 3; }
 
 			renderConsole();
 
@@ -350,7 +359,7 @@ int main() {
 		
 		// long story short, sending more than one request a frame, caused,, issues to put it lightly 
 
-		std::optional<PipePacket> playerPackets[2] = { std::optional<PipePacket>(), std::optional<PipePacket>() };
+		std::optional<PipePacket> playerPackets[4] = { std::optional<PipePacket>(), std::optional<PipePacket>(), std::optional<PipePacket>(), std::optional<PipePacket>() };
 
 		std::optional<PipePacket> recvData = pipe.pop();
 		while (recvData.has_value()) {
@@ -368,7 +377,7 @@ int main() {
 			recvData = pipe.pop();
 		}
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 4; i++) {
 			if (playerPackets[i].has_value()) {
 				
 				collarManager.sendShock(playerPackets[i].value(), shockDisplayCount);
