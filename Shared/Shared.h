@@ -190,22 +190,24 @@ typedef struct PipePacket {
 	union {
 
 		struct {
-			uint8_t __unusedErrorBit : 1;
+			
 			/*uint8_t player : 1;
 			uint8_t counterhit : 1;
 			uint8_t screenshake : 1;
 			uint8_t bounce : 1;
-			uint8_t crit : 1; 
+			uint8_t crit : 1;
 			uint8_t reduceFail : 1;
 			uint8_t electricAttack : 1;
 			*/
+
+			uint8_t __unusedErrorBit : 1;
+			
 			uint8_t player : 2;
 			uint8_t counterhit : 1;
 			uint8_t reduceFail : 1;
 
-			uint8_t omfg : 3;
+			uint8_t __unusedFlags : 3;
 
-			
 			uint8_t strength : 8;
 
 		};

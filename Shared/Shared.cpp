@@ -174,7 +174,7 @@ void CollarManager::displayStatus() {
 	printf("\tToken: %s\n\n", token[0] == '\0' ? "???" : censorString(token).c_str());
 
 	for (int i = 0; i < 4; i++) {
-		printf("Collar %d (Team %d):\n", i + 1, (i & 1) + 1);
+		printf("Collar %d (Team %d Player %d):\n", i + 1, (i & 1) + 1, (i >= 2) + 1);
 		collars[i].displayStatus();
 		printf("\n");
 	}
@@ -205,25 +205,25 @@ void CollarManager::readSettings(int depth) {
 			"# your openshock api token\n"
 			"token : put it here please :)\n"
 			"\n"
-			"# P1 Shocker ID (Team 1)\n"
+			"# P1 Shocker ID (Team 1 Player 1)\n"
 			"p1ID : put it here please :)\n"
 			"p1MinShock : 10 # min shock. shock values are 0-100\n"
 			"p1MaxShock : 20 # max shock\n"
 			"p1Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
-			"# P2 Shocker ID (Team 2)\n"
+			"# P2 Shocker ID (Team 2 Player 1)\n"
 			"p2ID : put it here please :)\n"
 			"p2MinShock : 10 # min shock\n"
 			"p2MaxShock : 20 # max shock\n"
 			"p2Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
-			"# P3 Shocker ID (Team 1)\n"
+			"# P3 Shocker ID (Team 1 Player 2)\n"
 			"p3ID : put it here please :)\n"
 			"p3MinShock : 10 # min shock\n"
 			"p3MaxShock : 20 # max shock\n"
 			"p3Type: Shock # can be either Shock, Sound, or Vibrate\n"
 			"\n"
-			"# P4 Shocker ID (Team 2)\n"
+			"# P4 Shocker ID (Team 2 Player 2)\n"
 			"p4ID : put it here please :)\n"
 			"p4MinShock : 10 # min shock\n"
 			"p4MaxShock : 20 # max shock\n"
@@ -519,7 +519,7 @@ bool Pipe::peek() {
 		} else if (err == ERROR_BAD_PIPE) {
 
 		} else {
-			printf(RED "unknown err %d\n" RESET, err);
+			printf(RED "unknown err %d in pipe peek\n" RESET, err);
 		}
 
 		return false;
@@ -548,7 +548,7 @@ std::optional<PipePacket> Pipe::pop() {
 		} else if (err == ERROR_BAD_PIPE) {
 
 		} else {
-			printf(RED "unknown err %d\n" RESET, err);
+			printf(RED "unknown err %d in pipe pop\n" RESET, err);
 		}
 
 		
