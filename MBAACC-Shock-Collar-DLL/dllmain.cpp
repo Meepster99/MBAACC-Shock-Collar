@@ -107,6 +107,24 @@ void __stdcall patchByte(auto addr, const BYTE byte) {
 
 // -----
 
+typedef struct RawInput {
+	BYTE dir = 0;
+	BYTE btn = 0;
+	BYTE what = 0; // FN1 is 1, FN2 is 2
+	void set(int playerIndex) {
+		DWORD baseControlsAddr = *(DWORD*)0x76E6AC;
+		if (baseControlsAddr == 0) {
+			return;
+		}
+
+		dir = *(BYTE*)(baseControlsAddr + 0x18 + (playerIndex * 0x14));
+		btn = *(BYTE*)(baseControlsAddr + 0x24 + (playerIndex * 0x14));
+		what = *(BYTE*)(baseControlsAddr + 0x25 + (playerIndex * 0x14));
+	}
+} RawInput;
+
+RawInput playerInputs[4];
+
 PlayerData* players[4] = {
 	(PlayerData*)(0x00555130 + (0 * 0xAFC)),
 	(PlayerData*)(0x00555130 + (1 * 0xAFC)),
@@ -259,6 +277,21 @@ void updateBattleSceneCallback() {
 		}
 
 		packetQueue[i].reset();
+
+		playerInputs[i].set(i);
+
+		if (playerInputs[i].what & 0x02) { // FN2 
+			PipePacket tempPacket;
+			
+			constexpr int shockLookup[4] = { 2, 3, 0, 1 };
+			tempPacket.player = shockLookup[i];
+
+			tempPacket.setStrength(9999);
+
+			packetQueue[shockLookup[i]] = tempPacket;
+		}
+
+	
 	}
 
 	static BYTE prevThrowState[4] = { 0, 0, 0, 0 }; // tbh there has to be a better way to do rising edge bs
