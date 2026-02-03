@@ -385,8 +385,8 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 	{
 		"id": ")" + std::string(collars[player].id) + R"(",
 		"type": ")" + std::string(getShockTypeName(collars[player].shockType)) + R"(",
-		"intensity": )" + std::to_string(10) + R"(,
-		"duration": )" + std::to_string(300) + R"(,
+		"intensity": )" + std::to_string(strength) + R"(,
+		"duration": )" + std::to_string(duration) + R"(,
 		"exclusive": true
 	}
 ])";
