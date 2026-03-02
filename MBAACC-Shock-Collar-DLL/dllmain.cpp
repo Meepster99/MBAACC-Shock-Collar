@@ -134,135 +134,6 @@ PlayerData* players[4] = {
 
 // -----
 
-/*
-void updateBattleSceneCallback() {
-
-	DWORD playerAddr;
-	static int playerHealth[2] = { 11400, 11400 };
-	static BYTE bounceCounts[2] = { 0, 0 };
-	static unsigned prevCorrection[2] = { 100, 100 };
-	static bool prevNotInCombo[2] = {true, true};
-
-	// you can reduce until one frame AFTER. that is why this exists. additionally, im only sending a max of one shock per frame, so a queue isnt needed
-	// i hope that the flag is set long enough though, i will need a queue if otherwise
-	// testing needs to be done on this.
-	static std::optional<PipePacket> packetQueue[2];
-
-	for (int player = 0; player < 2; player++) {
-		playerAddr = 0x00555130 + (player * 0xAFC);
-		BYTE reduceStatus = *(BYTE*)(playerAddr + 0x348);
-
-		if (reduceStatus != 2 && packetQueue[player].has_value()) {
-		//if(packetQueue[player].has_value()) {
-			pipe.push(packetQueue[player].value());
-		}
-
-		packetQueue[player].reset();
-	}
-
-	for (int player = 0; player < 2; player++) {
-
-		// check 004770f0 in ghidra for an explanation
-		playerAddr = 0x00555130 + ((player) * 0xAFC);
-
-		bool temp = *(bool*)(playerAddr + 0x64);
-
-		if(!prevNotInCombo[player] && temp) {
-			prevCorrection[0] = 100;
-			prevCorrection[1] = 100;
-		}
-
-		prevNotInCombo[player] = temp;
-	}
-
-	for (int player = 0; player < 2; player++) {
-
-		playerAddr = 0x00555130 + (player * 0xAFC);
-
-		BYTE tempBounce = *(BYTE*)(playerAddr + 0x17E);
-		bool bounceDamage = tempBounce > bounceCounts[player];
-		bounceCounts[player] = tempBounce;
-
-		PipePacket packet;
-
-		int tempPlayerHealth = *(int*)(playerAddr + 0xBC);
-		if (tempPlayerHealth != playerHealth[player] || bounceDamage) {
-			
-			if (tempPlayerHealth > playerHealth[player]) {
-				playerHealth[player] = tempPlayerHealth;
-				continue;
-			}
-			
-			int healthDelta = playerHealth[player] - tempPlayerHealth;
-
-			playerHealth[player] = tempPlayerHealth;
-			
-			DWORD attackDataPointer = *(DWORD*)(playerAddr + 0x1FC);
-			if (attackDataPointer == 0) { // todo, i should probs do something to prevent attack pointer reuse on grab, despite it being funny
-				continue;
-			}
-
-			if (*(BYTE*)(playerAddr + 0x17B)) { // we are blocking, continue
-				continue;
-			}
-
-			BYTE reduceStatus = *(BYTE*)(playerAddr + 0x348);
-			if (reduceStatus == 2) { // successful reduce
-				continue;
-			}
-
-			uint32_t hitFlags = *(uint32_t*)(attackDataPointer + 0x3C);
-
-			BYTE effectType = *(BYTE*)(attackDataPointer + 0x30);
-
-			packet.player = player;
-			packet.counterhit = (*(BYTE*)(playerAddr + 0x194)) == 0;
-			packet.screenshake = !!(hitFlags & 0b01000000);
-			packet.bounce = bounceDamage;
-			packet.reduceFail = reduceStatus == 1;
-			packet.electricAttack = effectType == 3;
-		
-			// todo, need crit
-
-			uint16_t damage = *(uint16_t*)(attackDataPointer + 0x44);
-			
-			damage = round(((float)damage) * ((float)prevCorrection[player] * 0.01f));
-
-			packet.setStrength(damage);
-			
-			//pipe.push(packet);
-
-			packetQueue[player] = packet;
-
-			//packet.errorBit = 1;
-			//packet.error = prevCorrection[player];
-			//pipe.push(packet);
-		}
-	}
-	
-	for (int player = 0; player < 2; player++) {
-
-		if (prevNotInCombo[1-player]) {
-			continue;
-		}
-
-		// check 004770f0 in ghidra for an explanation
-		playerAddr = 0x00555130 + 4 + ((player) * 0xAFC);
-
-		int iVar4 = ((int)*(BYTE*)(playerAddr + 0x2F0)) * 0x20C;
-		unsigned temp1 = (0x00557dd8 + iVar4);
-
-		BYTE corVal = *(BYTE*)temp1;
-		if (corVal == 0) {
-			corVal = 100;
-		}
-		prevCorrection[1 - player] = corVal;
-		
-	}
-	
-}
-*/
-
 void updateBattleSceneCallback() {
 
 	// you can reduce until one frame after, which is why things are staggered
@@ -322,41 +193,6 @@ void updateBattleSceneCallback() {
 		}
 
 		playerHealth[i] = player->subObj.health;
-
-		/*
-		if (!prevThrowState[i] && player->throwFlag) {
-			packet.setStrength(1000); // i just,, ugh. ugh
-			packetQueue[i] = packet;
-			//log("throw");
-		} else if (player->recievedHit) {
-			if (player->recievingAttackPtr != NULL) {
-				AttackData* atk = player->recievingAttackPtr;
-
-				// proration is stored in the attacker. with 2v2, i have no idea how im going to track recieved bs
-				// im just going to store my own thing here, its def not accurate. i do not care
-
-				packet.setStrength((int)((float)atk->damage * shockMult[i]));
-
-				packet.counterhit = (player->counterhitState != 0);
-				packet.reduceFail = (player->reduce == 1);
-
-				packetQueue[i] = packet;
-				
-				shockMult[i] *= 0.925f; // this number isnt real, and i made it up
-				shockResetTimer[i] = 60;
-			}
-		}
-
-		playerHealth[i] = player->health;
-		prevThrowState[i] = player->throwFlag;
-		
-		if (shockResetTimer[i] > 0) {
-			shockResetTimer[i]--;
-			if (shockResetTimer[i] == 0) {
-				shockMult[i] = 1.0f;
-			}
-		}
-		*/
 
 	}
 }
@@ -420,7 +256,6 @@ void threadFunc() {
 
 	*/
 
-	//patchJump(0x004540b8, _naked_updateBattleSceneCallback1);
 	patchJump(0x0046dfd0, _naked_updateBattleSceneCallback2);
 
 	// doing this in here is not ideal, but unloading the dll while inside dll code is a huge risk. at least something being blocking is actually helpful now
