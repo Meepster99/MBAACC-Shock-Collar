@@ -69,6 +69,8 @@
 	__asm { push addr } \
     __asm { ret }
 
+#define ASM_RET __asm ret;
+
 #define RESET "\x1b[0m\x1b[97m" // an extra white is tacked on here just to make it the default color
 
 #define DARKRED "\x1b[31m"

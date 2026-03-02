@@ -272,7 +272,7 @@ void updateBattleSceneCallback() {
 	for (int i = 0; i < 4; i++) {
 		PlayerData* player = players[i];
 
-		if (player->reduce != 2 && packetQueue[i].has_value()) {
+		if (player->reduceFlag != 2 && packetQueue[i].has_value()) {
 			pipe.push(packetQueue[i].value());
 		}
 
@@ -310,18 +310,18 @@ void updateBattleSceneCallback() {
 
 		// simpler solution, more boring
 
-		if (player->health < playerHealth[i]) {
-			int delta = playerHealth[i] - player->health;
+		if (player->subObj.health < playerHealth[i]) {
+			int delta = playerHealth[i] - player->subObj.health;
 
 			packet.setStrength(delta);
 
-			packet.counterhit = (player->counterhitState != 0);
-			packet.reduceFail = (player->reduce == 1);
+			packet.counterhit = (player->subObj.counterhitState != 0);
+			packet.reduceFail = (player->reduceFlag == 1);
 
 			packetQueue[i] = packet;
 		}
 
-		playerHealth[i] = player->health;
+		playerHealth[i] = player->subObj.health;
 
 		/*
 		if (!prevThrowState[i] && player->throwFlag) {
