@@ -231,7 +231,19 @@ BOOL WINAPI ConsoleHandler(DWORD signal) {
 
 void temp() {
 
-	collarManager.readSettings();
+	static bool first = true;
+	if (first) {
+		first = false;
+		collarManager.readSettings();
+	}
+	
+
+	collarManager.sendShock(0, 2, 300); 
+	Sleep(400);
+	collarManager.sendShock(1, 2, 300);
+	//Sleep(400);
+	//collarManager.sendShock(0, 2, 300);
+	return;
 
 	for (int i = 0; i < 4; i++) {
 		printf("shock %d\n", i);
@@ -383,6 +395,7 @@ int main() {
 		}
 		
 		// long story short, sending more than one request a frame, caused,, issues to put it lightly 
+		// coming back a year later. which issues maddy. which fucking issues.
 
 		std::optional<PipePacket> playerPackets[4] = { std::optional<PipePacket>(), std::optional<PipePacket>(), std::optional<PipePacket>(), std::optional<PipePacket>() };
 
@@ -402,9 +415,16 @@ int main() {
 			recvData = pipe.pop();
 		}
 
+		static int lastShock = -1; // tracks the last shocked player, such that... i can delay a shock when we are switching who is getting shocked. i hate this
+		
 		for (int i = 0; i < 4; i++) {
 			if (playerPackets[i].has_value()) {
 				
+				if (i != lastShock && lastShock != -1) {
+					Sleep(500); // this sleep here is... not ideal. sleeping in the main thread never is. i think 2v2 shock is just not feasable for these reasons
+				}
+				lastShock = i;
+
 				collarManager.sendShock(playerPackets[i].value(), shockDisplayCount);
 
 				lastShockTime = getMilliseconds();
@@ -415,6 +435,10 @@ int main() {
 		long long tempTimeDelta = getMilliseconds() - lastShockTime;
 		if (shockDisplayCount != 0 && tempTimeDelta > (16 * 2)) {
 			printf("  \r"); // clear the little arrow at the start of the shock
+		}
+
+		if(tempTimeDelta > 500) {
+			lastShock = -1; // reset the last shocked player so the next shock can go through immediately
 		}
 
 		if (shockDisplayCount != 0 && tempTimeDelta > 1000) {

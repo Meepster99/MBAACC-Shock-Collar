@@ -458,10 +458,21 @@ bool CollarManager::serialSendShock(int player, int strength, int duration, bool
 	std::string intensity = std::to_string(strength);
 	std::string length = std::to_string(duration);
 
-	// first time trying std::format
-	std::string data = std::format("{{\"model\":\"{}\",\"id\":{},\"type\":\"{}\",\"intensity\":{},\"durationMs\":{}}}", model, id, shockType, intensity, length);
+	// could i get pulsing to work by sending a stop?
 
-	std::string res = serial->sendCommand("rftransmit", data, false);
+	// first time trying std::format
+	std::string data;
+	std::string res;
+
+	data = std::format("{{\"model\":\"{}\",\"id\":{},\"type\":\"{}\",\"intensity\":{},\"durationMs\":{}}}", model, id, shockType, intensity, length);
+
+	res = serial->sendCommand("rftransmit", data, false);
+
+	//printf("\n%s\n", res.c_str());
+
+	//data = std::format("{{\"model\":\"{}\",\"id\":{},\"type\":\"{}\",\"intensity\":{},\"durationMs\":{}}}", model, id, "stop", intensity, length);
+
+	//res = serial->sendCommand("rftransmit", data, false);
 
 	//printf("res: %s\n", res.c_str());
 
@@ -483,6 +494,11 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 	// i swear the 300ms,, it only works on SOME?? of my collars, for unknowable reasons
 
 	duration = CLAMP(duration, 600, 1000);
+	// at a duration of 1s, it seems the differences even out. sorta
+	// this will make everything hurt, a lot more, though.
+	duration = 50; // this feels so much better, but doesnt work on all collars? #3 and #4 work, 1 and 2 dont. open them up, figure it out, order more
+	// i cant overstate how important keeping this duration low is. it lets you feel multihits, its just so much better. i dont know why some collars dont work.
+
 
 	bool res = false;
 	
@@ -673,7 +689,7 @@ int SerialPort::init() {
 		0,
 		NULL,
 		OPEN_EXISTING,
-		0, // unsure
+		FILE_FLAG_OVERLAPPED, // unsure, can be 0 for non overlap
 		NULL
 	);
 
@@ -705,29 +721,86 @@ int SerialPort::init() {
 	printf("set comm state\n");
 
 	COMMTIMEOUTS timeouts = { 0 };
-	timeouts.ReadIntervalTimeout = 500;
-	timeouts.ReadTotalTimeoutConstant = 500;
-	timeouts.ReadTotalTimeoutMultiplier = 500;
-	timeouts.WriteTotalTimeoutConstant = 500;
-	timeouts.WriteTotalTimeoutMultiplier = 500;
+	// this might be the,... time between reqs i can do? idefk. initally had at 500, probs was way too much
+	timeouts.ReadIntervalTimeout = 50;
+	timeouts.ReadTotalTimeoutConstant = 50;
+	timeouts.ReadTotalTimeoutMultiplier = 50;
+	timeouts.WriteTotalTimeoutConstant = 50;
+	timeouts.WriteTotalTimeoutMultiplier = 50;
 
 	SetCommTimeouts(hSerial, &timeouts);
 
 	printf("set timeouts\n");
+
+	sendCommand("echo false"); // disabling serial echo will HOPEFULLY free up cycles on it and have it be less of a bitch
+
+	sendCommand("keepalive true"); // not sure what this does
+
+	// disabling the wifi, could free up more cpu. maybe.
+	// i set the captive portal to off, through the website
 
 	return 0;
 }
 
 std::string SerialPort::sendCommand(const std::string& cmd, const std::string& params, bool shouldRead) {
 
+	/*
+	
+	im listing out issues here because MY GOd are there many
+
+	the main issue is the lack of feedback between the collars and the hub, and therefore the hub and me
+	i can send a shock request out, have the serial be ready for it, but it means nothing when the hub will:
+		lie and say every shock is a success
+		send shit when the collars not ready
+		due to i assume, different frequencies? (or something) there is a delay when switching between collars to shock.
+			i can shock collar 0 twice in 100ms, but shocking collar 0 and then collar 1 takes,,, an indeterminate amount of time (400-500ms?) (i should build this into the program
+			
+	
+	i could modify the source, rebuild, and reflash
+
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/CommandHandler.cpp#L307
+
+	but im not sure that would help much
+
+	bullshit continues, exec eventually gets to this
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L99
+
+
+	this queue. hmmm
+	this "wait max 10ms (Adjust this)
+	hmm
+	this overwrite existing thing too, might be useful for getting out pulses?
+
+	the true solution to this, honestly, is DIYing all aspects of this, connecting the collars directly to pc through a serial connection of their own (1 con per collar)
+	this wireless shit sucks
+	
+	*/
+
 	// not reading seems to stop the blocking issues i was having
+
+	/*
+	
+	for completely unknown reasons, 2 of my shock collars can do fast pulses, 2 cannot. i suppose i can just switch to mainly using the 2 that can? but what the fuck
+	they can even do 100ms, no 50ms, and it has a difference
+	2 of these collars are bitches, and i have no reaason why
+	some ppl said that <300 was inconsistent, but it seems pretty good. stops after 50
+	
+	also, no matter what i do, collar like
+	shocking 2 ppl at the same time isnt easily doable, and shocking 2 ppl even right after another is barely functional. 
+	*/
+
+
+
 
 	/*
 	if (!shouldRead) {
 		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR); // unknown if this is needed
 	}
 	*/
+
 	PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR); // unknown if this is needed
+
+	bool serialStatus;
 
 	static BYTE data[4096];
 	DWORD bytesWritten;
@@ -757,12 +830,27 @@ std::string SerialPort::sendCommand(const std::string& cmd, const std::string& p
 	//printf("sending: %s\n", &data[4]);
 
 	// does writefile auto append the fucking length?
+	/*
 	if (!WriteFile(hSerial, data, dataLen, &bytesWritten, NULL)) {
 		fprintf(stderr, "serial write failed\n");
 		return "";
+	}*/
+
+	// i have 0 clue if overlapped is better or not
+	OVERLAPPED ov = {};
+	ov.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	serialStatus = WriteFile(hSerial, data, dataLen, NULL, &ov);
+
+	if (!serialStatus && GetLastError() == ERROR_IO_PENDING) {
+		//printf("\nwaiting\n");
+		WaitForSingleObject(ov.hEvent, INFINITE);
+		GetOverlappedResult(hSerial, &ov, &bytesWritten, FALSE);
 	}
 
+
 	if (!shouldRead) {
+		//FlushFileBuffers(hSerial);
 		return "OK";
 	}
 
@@ -772,9 +860,20 @@ std::string SerialPort::sendCommand(const std::string& cmd, const std::string& p
 	//FlushFileBuffers(hSerial);
 	//Sleep(200);
 
+	/*
 	if (!ReadFile(hSerial, buffer, sizeof(buffer) - 1, &bytesRead, NULL)) {
 		fprintf(stderr, "serial read failed\n");
 		return "";
+	}
+	*/
+
+	ov.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	serialStatus = ReadFile(hSerial, buffer, sizeof(buffer) - 1, &bytesRead, &ov);
+
+	if (!serialStatus && GetLastError() == ERROR_IO_PENDING) {
+		WaitForSingleObject(ov.hEvent, INFINITE);
+		GetOverlappedResult(hSerial, &ov, &bytesRead, FALSE);
 	}
 
 	buffer[bytesRead] = '\0';
