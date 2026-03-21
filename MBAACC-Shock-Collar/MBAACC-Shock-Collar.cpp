@@ -229,8 +229,45 @@ BOOL WINAPI ConsoleHandler(DWORD signal) {
 	return TRUE;
 }
 
+void temp() {
+
+	SerialPort p;
+	p.init();
+
+	std::string res;
+	
+	//printf("\r\n\r\nsending one command\r\n\r\n");
+	//p.sendCommand("help");
+	
+	//printf("\r\n\r\nsending two command\r\n\r\n");
+	//p.sendCommand("help");
+
+	std::string data = "{\"model\":\"caixianlin\",\"id\":33250,\"type\":\"vibrate\",\"intensity\":50,\"durationMs\":300}";
+
+	res = p.sendCommand("help");
+
+	printf("%s\n", res.c_str());
+
+	res = p.sendCommand("rftransmit", data);
+	printf("%s\n", res.c_str());
+
+	//p.sendCommand(command);
+	//p.sendCommand("rftransmit {'model':'caixianlin'}");
+
+	
+}
+
 int main() {
 	
+	/*
+	temp();
+
+	printf("func left\n");
+	system("pause");
+
+	return 0;
+	*/
+
 	//printf("%d\n", sizeof(PipePacket));
 	//return 0;
 
@@ -291,7 +328,9 @@ int main() {
 	KeyState shiftKey(VK_SHIFT);
 	KeyState lMouse(VK_LBUTTON);
 
+	printf("fadsghjop\n");
 	collarManager.readSettings();
+	printf("OMF\n");
 	renderConsole();
 
 	pipe.initServer();

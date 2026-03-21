@@ -271,19 +271,41 @@ public:
 
 };
 
+class SerialPort {
+public:
+
+	SerialPort();
+
+	~SerialPort();
+
+	int init();
+
+	std::string sendCommand(const std::string& cmd, const std::string& params = "");
+
+	HANDLE hSerial = NULL;
+
+};
+
 class CollarManager {
 public:
 
 	CollarManager() {}
+	~CollarManager();
 
 	void setToken(const char* token_);
+	void setSerial(const char* data);
 
+	bool webSendShock(int player, int strength, int duration, bool quiet = false);
+	bool serialSendShock(int player, int strength, int duration, bool quiet = false);
 	bool sendShock(int player, int strength, int duration, bool quiet = false);
 	void sendShock(PipePacket packet, int shockDisplayCount = 0);
 
 	void displayModifiers(std::optional<PipePacket> packet = std::optional<PipePacket>());
 	void displayStatus();
 	void readSettings(int depth = 0);
+
+	bool useSerial = false;
+	SerialPort* serial = NULL;
 
 	char token[256] = { '\0' };
 
