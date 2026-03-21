@@ -461,9 +461,9 @@ bool CollarManager::serialSendShock(int player, int strength, int duration, bool
 	// first time trying std::format
 	std::string data = std::format("{{\"model\":\"{}\",\"id\":{},\"type\":\"{}\",\"intensity\":{},\"durationMs\":{}}}", model, id, shockType, intensity, length);
 
-	std::string res = serial->sendCommand("rftransmit", data);
+	std::string res = serial->sendCommand("rftransmit", data, false);
 
-	printf("res: %s\n", res.c_str());
+	//printf("res: %s\n", res.c_str());
 
 	return true;
 }
@@ -482,7 +482,7 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 
 	// i swear the 300ms,, it only works on SOME?? of my collars, for unknowable reasons
 
-	duration = CLAMP(duration, 500, 1000);
+	duration = CLAMP(duration, 600, 1000);
 
 	bool res = false;
 	
@@ -673,7 +673,7 @@ int SerialPort::init() {
 		0,
 		NULL,
 		OPEN_EXISTING,
-		0,
+		0, // unsure
 		NULL
 	);
 
@@ -718,9 +718,16 @@ int SerialPort::init() {
 	return 0;
 }
 
-std::string SerialPort::sendCommand(const std::string& cmd, const std::string& params) {
+std::string SerialPort::sendCommand(const std::string& cmd, const std::string& params, bool shouldRead) {
 
-	//PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR); // unknown if this is needed
+	// not reading seems to stop the blocking issues i was having
+
+	/*
+	if (!shouldRead) {
+		PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR); // unknown if this is needed
+	}
+	*/
+	PurgeComm(hSerial, PURGE_RXCLEAR | PURGE_TXCLEAR); // unknown if this is needed
 
 	static BYTE data[4096];
 	DWORD bytesWritten;
@@ -753,6 +760,10 @@ std::string SerialPort::sendCommand(const std::string& cmd, const std::string& p
 	if (!WriteFile(hSerial, data, dataLen, &bytesWritten, NULL)) {
 		fprintf(stderr, "serial write failed\n");
 		return "";
+	}
+
+	if (!shouldRead) {
+		return "OK";
 	}
 
 	DWORD bytesRead;

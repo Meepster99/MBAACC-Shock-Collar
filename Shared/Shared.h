@@ -280,7 +280,7 @@ public:
 
 	int init();
 
-	std::string sendCommand(const std::string& cmd, const std::string& params = "");
+	std::string sendCommand(const std::string& cmd, const std::string& params = "", bool shouldRead = true);
 
 	HANDLE hSerial = NULL;
 
