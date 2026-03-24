@@ -765,7 +765,6 @@ std::string SerialPort::sendCommand(const std::string& cmd, const std::string& p
 	bullshit continues, exec eventually gets to this
 	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L99
 
-
 	this queue. hmmm
 	this "wait max 10ms (Adjust this)
 	hmm
@@ -773,7 +772,39 @@ std::string SerialPort::sendCommand(const std::string& cmd, const std::string& p
 
 	the true solution to this, honestly, is DIYing all aspects of this, connecting the collars directly to pc through a serial connection of their own (1 con per collar)
 	this wireless shit sucks
+
+	other stuff, the transmitEnd variable
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L97
+	how does... please tell me that like
+	theres no way that a end time is what is sent, not just a duration.
+
+	but ok, ok
+	following the code, data eventually gets to
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L247
+
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L184
+	^^ what the fuck is this code. why add millis to something to just subtrack it. also, if enough time passes, that can change the length? probs not by enough but,,, whatthefuck
 	
+	i should just rewrite and reflash this bs	
+	
+	full path:
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L100
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L214
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L247
+	https://github.com/OpenShock/Firmware/blob/e6d3d69f81b352d07e85e46951611929f5da4bc6/src/radio/RFTransmitter.cpp#L180
+
+	the last one, the writeseq one, seems to be a big issue.
+	so. the collars do not get any durations sent. they are sent signals to start, and to stop. 
+	
+	the writeseq command is what causes the issue, this was not built to shock multiple things at once. but it can, right?
+
+	void RFTransmitter::TransmitTask() is a loop. its always running	
+	writeSequences though, has to be one of the weirdest functions.
+	actually nope, seq is passed by ref, yea. 
+	i think an issue might be the ammount of heap memory being used? once again grateful to butano for ETL
+	they are using blocking operations for the writes. i could,... adjust that
+	then again, i have no idea how long those ops are taking. it might not be a big deal. but something is causing issues.
+
 	*/
 
 	// not reading seems to stop the blocking issues i was having
