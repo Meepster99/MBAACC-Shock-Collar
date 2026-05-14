@@ -493,10 +493,10 @@ bool CollarManager::sendShock(int player, int strength, int duration, bool quiet
 
 	// i swear the 300ms,, it only works on SOME?? of my collars, for unknowable reasons
 
-	duration = CLAMP(duration, 600, 1000);
+	//duration = CLAMP(duration, 600, 1000);
 	// at a duration of 1s, it seems the differences even out. sorta
 	// this will make everything hurt, a lot more, though.
-	duration = 50; // this feels so much better, but doesnt work on all collars? #3 and #4 work, 1 and 2 dont. open them up, figure it out, order more
+	//duration = 50; // this feels so much better, but doesnt work on all collars? #3 and #4 work, 1 and 2 dont. open them up, figure it out, order more
 	// i cant overstate how important keeping this duration low is. it lets you feel multihits, its just so much better. i dont know why some collars dont work.
 
 
@@ -521,7 +521,7 @@ void CollarManager::sendShock(PipePacket packet, int shockDisplayCount) {
 
 	int player = packet.player;
 	float strength = packet.getStrength();
-	float duration = 300;
+	float duration = 300; // this should probs be a config thing. but im tired.
 
 	strength = (CLAMP(strength / maxDamageVal, 0.0f, 1.0f));
 
